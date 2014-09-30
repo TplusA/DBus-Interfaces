@@ -36,7 +36,9 @@
         </signal>
         <signal name="PositionChanged">
             <arg name="position" type="x" direction="out"/>
-            <arg name="units" type="s" direction="out"/>
+            <arg name="position_units" type="s" direction="out"/>
+            <arg name="duration" type="x" direction="out"/>
+            <arg name="duration_units" type="s" direction="out"/>
         </signal>
         <signal name="SpeedChanged">
             <arg name="speed_factor" type="d"/>
