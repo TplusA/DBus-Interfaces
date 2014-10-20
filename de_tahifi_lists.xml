@@ -1,0 +1,140 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/lists">
+    <interface name="de.tahifi.Lists.Navigation">
+        <!--
+        Retrieve range of list items.
+
+        Partial lists can be read out over D-Bus using a triple of list ID,
+        first index in that list, and the maximum number of items to return.
+        The method returns
+        1. the number of items sent; and
+        2. the requested items as an array of tuples containing
+          1. the item ID;
+          2. the displayable item text (UTF-8); and
+          3. a flag that indicates whether or not the item is a directory.
+
+        Item ID 0 always denotes the first entry in a list. A maximum number of
+        0 indicates that all items in the list should be sent.
+
+        List IDs are opaque non-zero identifiers managed internally by list
+        brokers. No application shall make any assumptions about these IDs,
+        except maybe that they are probably completely random numbers and that
+        ID 0 is invalid. Only IDs retured by \c GetListId can be used safely to
+        invoke this method. In case an invalid list ID is used in an
+        invokation, the returned error code will be set accordingly.
+
+        The method may take a rather long time to generate an answer in case
+        the list contents have to be fetched over a network. If such a blocking
+        behavior is not acceptable in some situation, then the \c CheckRange
+        method should be called beforehand.
+
+        \note Lists may become outdated over time in which case the
+              \c ListInvalidate signal is sent.
+
+        \param arg_list_id
+            Identifier of the list whose items should be retrieved.
+        \param arg_first_item_id
+            Identifier of the first item in the list to be returned.
+        \param arg_count
+            Maximum number of list items to return.
+        \param proxy, cancellable, callback, user_data GDBus clutter.
+
+        \returns
+            The D-Bus method returns an error code to the caller, which is either
+            - 0 in case no error occurred;
+            - 1 in case the ID passed in \p arg_list_id list was invalid;
+            - 2 in case of an I/O error (e.g., broken network connection or
+                read error on physical medium).
+
+        \returns
+            In case no error occurred, the number of items in the list and the
+            requested range of list items themselves are returned; otherwise,
+            the number of items is returned as 0 and the returned list is
+            empty.
+        -->
+        <method name="GetRange">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="first_item_id" type="u" direction="in"/>
+            <arg name="count" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="number_of_items" type="u" direction="out"/>
+            <arg name="list" type="a(usb)" direction="out"/>
+        </method>
+
+        <!--
+        Check if a range on list items is readily available.
+
+        Arguments are the same as for \c GetRange, but this method does not
+        block and it does not return any list.
+        -->
+        <method name="CheckRange">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="first_item_id" type="u" direction="in"/>
+            <arg name="count" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="number_of_items" type="u" direction="out"/>
+        </method>
+
+        <!--
+        Get list ID for directory-typed list item.
+
+        This method is like an "enter list" operation, expect that nothing is
+        really entered at this point; that is, no user interface navigation
+        takes place here. Instead, the list broker allocates a list identifier
+        for the requested item and may prefetch any data required to populate
+        the list. This list identifier is returned to the caller. As long as
+        the returned list ID is valid, it can be used to read out list
+        contents.
+
+        By sending multiple \c GetListId requests, multiple lists may be
+        prefetched in parallel to increase the perceived speed of user
+        interface navigation.
+
+        \param arg_list_id, arg_item_id
+            List item whose child list ID should be returned. The root list's
+            ID is obtained by passing 0 for both \p arg_list_id and
+            \p arg_item_id. This can be used as a starting point when no other
+            lists are known yet. Consecutive requests must use the returned
+            child list ID to reference the root list.
+        \param proxy, cancellable, callback, user_data GDBus clutter.
+
+        \returns
+            The D-Bus method returns either the requested list ID, or 0 in case
+            of an error (e.g., the specified list item does not exist or is not
+            a directory).
+        -->
+        <method name="GetListId">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="item_id" type="u" direction="in"/>
+            <arg name="child_list_id" type="u" direction="out"/>
+        </method>
+
+        <!--
+        Hint that the referenced list is not interesting anymore.
+
+        The list broker may use this as a hint to stop prefetching data,
+        discard any list items, or even to remove the entire list from its
+        cache. When it decides to do the latter, a \c ListInvalidate signal is
+        sent.
+        -->
+        <method name="DiscardList">
+            <arg name="list_id" type="u" direction="in"/>
+        </method>
+
+        <!--
+        Indicate that the list with the given list ID cannot be used anymore.
+
+        There are two particular reasons why a list cannot be used anymore,
+        indicated in the return value: (1) list content has changed; or (2)
+        memory occupied by the list was reclaimed. In case the list content has
+        changed, the new list ID is sent along. Item IDs may or may not be
+        valid anymore. In case the list was removed, a new list ID of 0 is
+        sent.
+        -->
+        <signal name="ListInvalidate">
+            <arg name="list_id" type="u"/>
+            <arg name="new_list_id" type="u"/>
+        </signal>
+    </interface>
+</node>
