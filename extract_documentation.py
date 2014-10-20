@@ -113,10 +113,18 @@ dbus_type_to_ctype = {
     "x": "gint64"
 }
 
-def generate_specific_parameter_list(parameters, args):
+def generate_specific_parameter_list(parameters, args, required_direction = None):
     for arg in args:
         name = arg.getAttribute("name")
         dbus_type = arg.getAttribute("type")
+        direction = arg.getAttribute("direction")
+
+        if required_direction != None:
+            if not direction:
+                error_exit("No direction specified for argument " + name)
+
+            if direction != required_direction:
+                continue
 
         if dbus_type in dbus_type_to_ctype:
             c_type = dbus_type_to_ctype[dbus_type]
@@ -141,7 +149,7 @@ def generate_method_call_parameter_list(proxy_typename, arguments):
 
     parameters = []
     parameters.append(proxy_typename + " *proxy")
-    generate_specific_parameter_list(parameters, args)
+    generate_specific_parameter_list(parameters, args, "in")
     parameters.append("GCancellable *cancellable")
     parameters.append("GAsyncReadyCallback callback")
     parameters.append("gpointer user_data")
