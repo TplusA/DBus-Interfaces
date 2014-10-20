@@ -242,7 +242,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "c:i:hH:n:o:s:")
     except getopt.GetoptError as err:
-        error_exit(err)
+        error_exit(str(err))
 
     xml_input_file = None
     doxygen_markdown_file = None
