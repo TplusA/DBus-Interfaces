@@ -270,7 +270,7 @@ def main():
         error_exit("Found " + str(len(node_def)) + " node elements.")
 
     interfaces = get_elements_with_comments(node_def[0].childNodes)
-    if len(interfaces) == 1:
+    if len(interfaces) < 1:
         error_exit("No interfaces defined in " + xml_input_file)
 
     with open(doxygen_header_file, "w+") as hfile, open(doxygen_markdown_file, "w+") as mdfile:
