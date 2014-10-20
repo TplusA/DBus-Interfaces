@@ -110,7 +110,9 @@ dbus_type_to_ctype = {
     "n": "gint16",
     "q": "guint16",
     "s": "const gchar *",
-    "x": "gint64"
+    "u": "guint",
+    "x": "gint64",
+    "y": "guchar"
 }
 
 def generate_specific_parameter_list(parameters, args, required_direction = None):
