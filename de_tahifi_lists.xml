@@ -8,11 +8,11 @@
         Partial lists can be read out over D-Bus using a triple of list ID,
         first index in that list, and the maximum number of items to return.
         The method returns
-        1. the number of items sent; and
-        2. the requested items as an array of tuples containing
-          1. the item ID;
-          2. the displayable item text (UTF-8); and
-          3. a flag that indicates whether or not the item is a directory.
+        1. an error code;
+        2. the index of the first entry in the list; and
+        3. the requested items as an array of tuples containing
+          1. the displayable item text (UTF-8); and
+          2. a flag that indicates whether or not the item is a directory.
 
         Item ID 0 always denotes the first entry in a list. A maximum number of
         0 indicates that all items in the list should be sent.
@@ -58,21 +58,23 @@
             <arg name="first_item_id" type="u" direction="in"/>
             <arg name="count" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
-            <arg name="number_of_items" type="u" direction="out"/>
-            <arg name="list" type="a(usb)" direction="out"/>
+            <arg name="first_item" type="u" direction="out"/>
+            <arg name="list" type="a(sb)" direction="out"/>
         </method>
 
         <!--
         Check if a range on list items is readily available.
 
         Arguments are the same as for \c GetRange, but this method does not
-        block and it does not return any list.
+        block and it returns the number of items that would be returned instead
+        of the list itself.
         -->
         <method name="CheckRange">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="first_item_id" type="u" direction="in"/>
             <arg name="count" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
+            <arg name="first_item" type="u" direction="out"/>
             <arg name="number_of_items" type="u" direction="out"/>
         </method>
 
