@@ -182,10 +182,18 @@ def strip_prefix_from_interface_name(iface_name, strip_prefix):
 
     return iface_name
 
-def generate_files_from_interfaces(interfaces, component_name, c_namespace, strip_prefix, hfile, mdfile):
+def generate_files_from_interfaces(interfaces, component_name, c_namespace, strip_prefix, hfile, mdfile,
+                                   exclude_signals, exclude_methods, exclude_properties):
     print(r"""\page dbus_interfaces D-Bus interface documentation
 
 Interfaces of _""" + component_name + "_:", file = mdfile)
+
+    signal_tag_name =   "signal"
+    method_tag_name =   "method"
+    property_tag_name = "property"
+    if exclude_signals:    signal_tag_name = None
+    if exclude_methods:    method_tag_name = None
+    if exclude_properties: property_tag_name = None
 
     for iface in interfaces:
         print(r"- \subpage " + ifacename_to_refname("iface", iface.node.getAttribute("name")), file = mdfile)
@@ -198,9 +206,9 @@ Interfaces of _""" + component_name + "_:", file = mdfile)
             error_exit('Unexpected tag "' + iface.node.tagName + '", expected interface')
 
         members = get_elements_with_comments(iface.node.childNodes)
-        all_signals = [m for m in members if m.node.tagName == "signal"]
-        all_methods = [m for m in members if m.node.tagName == "method"]
-        all_properties = [m for m in members if m.node.tagName == "property"]
+        all_signals = [m for m in members if m.node.tagName == signal_tag_name]
+        all_methods = [m for m in members if m.node.tagName == method_tag_name]
+        all_properties = [m for m in members if m.node.tagName == property_tag_name]
 
         iface_name = iface.node.getAttribute("name")
         fnname_prefix = ifacename_to_cstyle(strip_prefix_from_interface_name(iface_name, strip_prefix))
@@ -211,6 +219,10 @@ Interfaces of _""" + component_name + "_:", file = mdfile)
 
         if iface.comment_lines:
             print("\n" + iface.get_comment(), file = mdfile)
+
+        if len(all_signals) == 0 and len(all_methods) == 0 and len(all_properties) == 0:
+            print("\nThis interface is not used by this software.", file = mdfile)
+            continue
 
         proxy_typename = generate_proxy_typename(c_namespace, strip_prefix_from_interface_name(iface_name, strip_prefix))
 
@@ -245,12 +257,16 @@ Options:
          documentation.
 -c str   C namespace prefix for generated C names.
 -s str   Prefix to remove from the interface names for generated C names.
+-x str   Exclude D-Bus signals, methods, or properties from output (by default,
+         all parts of the defined D-Bus interface are extracted). The str may
+         be one of "signals", "methods", or "properties". This option may be
+         specified multiple times for cumulative effect.
 -h       This help screen.""", file = sys.stderr)
     sys.exit(exit_code)
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "c:i:hH:n:o:s:")
+        opts, args = getopt.getopt(sys.argv[1:], "c:i:hH:n:o:s:x:")
     except getopt.GetoptError as err:
         error_exit(str(err))
 
@@ -260,6 +276,9 @@ def main():
     component_name = None
     c_namespace = ""
     strip_from_interface_name = ""
+    exclude_signals = False
+    exclude_methods = False
+    exclude_properties = False
 
     for o, a in opts:
         if o == "-h":   usage(0)
@@ -269,6 +288,11 @@ def main():
         elif o == '-n': component_name = a
         elif o == "-o": doxygen_markdown_file = a
         elif o == '-s': strip_from_interface_name = a
+        elif o == '-x':
+            if a == 'signals':      exclude_signals = True
+            elif a == 'methods':    exclude_methods = True
+            elif a == 'properties': exclude_properties = True
+            else:                   usage()
 
     if not xml_input_file or not doxygen_header_file or not doxygen_markdown_file or not component_name:
         usage()
@@ -284,7 +308,9 @@ def main():
         error_exit("No interfaces defined in " + xml_input_file)
 
     with open(doxygen_header_file, "w+") as hfile, open(doxygen_markdown_file, "w+") as mdfile:
-        generate_files_from_interfaces(interfaces, component_name, c_namespace, strip_from_interface_name, hfile, mdfile)
+        generate_files_from_interfaces(interfaces, component_name, c_namespace,
+                                       strip_from_interface_name, hfile, mdfile,
+                                       exclude_signals, exclude_methods, exclude_properties)
 
 if __name__ == "__main__":
     main()
