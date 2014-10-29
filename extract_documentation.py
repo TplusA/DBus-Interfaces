@@ -114,13 +114,27 @@ dbus_type_to_ctype = {
     "i": "gint",
     "n": "gint16",
     "q": "guint16",
-    "s": "const gchar *",
     "u": "guint",
     "x": "gint64",
     "y": "guchar"
 }
 
+dbus_input_type_to_ctype = {
+    "s": "const gchar *",
+}
+
+dbus_output_type_to_ctype = {
+    "s": "gchar *",
+}
+
 def generate_specific_parameter_list(parameters, args, prefix, required_direction = None):
+    if required_direction == "in":
+        direction_specific_dbus_type_to_ctype = dbus_input_type_to_ctype
+    elif required_direction == "out":
+        direction_specific_dbus_type_to_ctype = dbus_output_type_to_ctype
+    else:
+        direction_specific_dbus_type_to_ctype = None
+
     for arg in args:
         name = arg.getAttribute("name")
         dbus_type = arg.getAttribute("type")
@@ -135,6 +149,8 @@ def generate_specific_parameter_list(parameters, args, prefix, required_directio
 
         if dbus_type in dbus_type_to_ctype:
             c_type = dbus_type_to_ctype[dbus_type]
+        elif direction_specific_dbus_type_to_ctype and dbus_type in direction_specific_dbus_type_to_ctype:
+            c_type = direction_specific_dbus_type_to_ctype[dbus_type]
         elif len(dbus_type) > 1:
             c_type = "GVariant *"
         else:
