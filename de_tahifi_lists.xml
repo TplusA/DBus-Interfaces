@@ -122,6 +122,53 @@
         </method>
 
         <!--
+        Get parent list ID and item that links to the given list.
+
+        The use of this method allows clients to be rather stateless and to
+        avoid keeping a trail of list IDs around. In addition, the client won't
+        have to worry about outdated list IDs when trying to move up a list
+        hierarchy.
+
+        \param arg_list_id
+            List ID whose parent item is to be determined.
+        \param out_parent_list_id, out_parent_item_id
+            The specific parent item that links to list ID \p arg_list_id. If
+            the parent list does not exist, a value of 0 is returned in both
+            \p out_parent_list_id and \p out_parent_item_id. In case the
+            \p arg_list_id refers to the root directory, an
+            \p out_parent_item_id of 1 is returned to allow distinction between
+            erroneous requests and requests from the root directory.
+        \param proxy, cancellable, error GDBus clutter.
+
+        \returns True on success, false on error.
+        -->
+        <method name="GetParentLink">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="parent_list_id" type="u" direction="out"/>
+            <arg name="parent_item_id" type="u" direction="out"/>
+        </method>
+
+        <!--
+        Get URI for given item in given list.
+
+        \param arg_list_id, arg_item_id
+            List item whose URI should be returned.
+        \param out_uri
+            A string containing the URI the item refers to. In case the item is
+            not associated with an URI (e.g., directory entries), an empty
+            string is returned.
+        \param proxy, cancellable, error GDBus clutter.
+
+        \returns True on success, false on error.
+        -->
+        <method name="GetURI">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="item_id" type="u" direction="in"/>
+            <arg name="uri" type="s" direction="out"/>
+        </method>
+
+
+        <!--
         Hint that the referenced list is not interesting anymore.
 
         The list broker may use this as a hint to stop prefetching data,
