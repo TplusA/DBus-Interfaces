@@ -38,20 +38,23 @@
             Identifier of the first item in the list to be returned.
         \param arg_count
             Maximum number of list items to return.
-        \param proxy, cancellable, callback, user_data GDBus clutter.
-
-        \returns
+        \param out_error_code
             The D-Bus method returns an error code to the caller, which is either
             - 0 in case no error occurred;
             - 1 in case the ID passed in \p arg_list_id list was invalid;
             - 2 in case of an I/O error (e.g., broken network connection or
                 read error on physical medium).
-
-        \returns
-            In case no error occurred, the number of items in the list and the
-            requested range of list items themselves are returned; otherwise,
-            the number of items is returned as 0 and the returned list is
+        \param out_first_item
+            ID of the first item in the list. This is basically just a copy of
+            the \p arg_first_item_id parameter for the client's convenience (no
+            need to remember the requested first item ID).
+        \param out_list
+            The requested range of list items are returned through this
+            parameter. In case \p out_error_code is not 0, the returned list is
             empty.
+        \param proxy, cancellable, error GDBus clutter.
+
+        \returns True on success, false on error.
         -->
         <method name="GetRange">
             <arg name="list_id" type="u" direction="in"/>
@@ -65,9 +68,14 @@
         <!--
         Check if a range on list items is readily available.
 
-        Arguments are the same as for \c GetRange, but this method does not
-        block and it returns the number of items that would be returned instead
-        of the list itself.
+        \param arg_list_id, arg_first_item_id, arg_count, out_error_code,
+            out_first_item
+            These arguments are the same as for \c GetRange, but this method
+            does not block and it returns the number of items that would be
+            returned instead of the list itself.
+        \param out_number_of_items
+            The number of items that would be returned by \c GetRange.
+        \param proxy, cancellable, error GDBus clutter.
         -->
         <method name="CheckRange">
             <arg name="list_id" type="u" direction="in"/>
@@ -99,12 +107,13 @@
             \p arg_item_id. This can be used as a starting point when no other
             lists are known yet. Consecutive requests must use the returned
             child list ID to reference the root list.
-        \param proxy, cancellable, callback, user_data GDBus clutter.
-
-        \returns
+        \param out_child_list_id
             The D-Bus method returns either the requested list ID, or 0 in case
             of an error (e.g., the specified list item does not exist or is not
             a directory).
+        \param proxy, cancellable, error GDBus clutter.
+
+        \returns True on success, false on error.
         -->
         <method name="GetListId">
             <arg name="list_id" type="u" direction="in"/>
