@@ -81,12 +81,17 @@ def write_section(section_name, verb, iface_name, f):
     print("\n\\section " + ifacename_to_refname(section_name.lower(), iface_name) + " " + section_name, file = f)
     print("\nHere is a list of " + section_name.lower() + " " + verb + " by the <tt>" + iface_name + "</tt> interface:\n", file = f)
 
-def write_table(kind, prefix, members, mdfile):
+def write_table(kind, prefix, suffix, members, mdfile):
     table_rows = [[kind + " name", "Related function"]]
 
     for m in members:
         name = m.node.getAttribute("name")
-        table_rows.append(["<tt>" + name + "</tt>", "#" + concat_c_names(prefix, name) + "()"])
+        fnname = concat_c_names(prefix, name)
+
+        if suffix:
+            fnname = concat_c_names(fnname, suffix)
+
+        table_rows.append(["<tt>" + name + "</tt>", "#" + fnname + "()"])
 
     col1_width = 0
     col2_width = 0
@@ -115,7 +120,7 @@ dbus_type_to_ctype = {
     "y": "guchar"
 }
 
-def generate_specific_parameter_list(parameters, args, required_direction = None):
+def generate_specific_parameter_list(parameters, args, prefix, required_direction = None):
     for arg in args:
         name = arg.getAttribute("name")
         dbus_type = arg.getAttribute("type")
@@ -135,14 +140,14 @@ def generate_specific_parameter_list(parameters, args, required_direction = None
         else:
             error_exit('Unsupported D-Bus type "' + dbus_type + '" used for argument "' + name + '"')
 
-        parameters.append(c_type + " arg_" + name)
+        parameters.append(c_type + " " + concat_c_names(prefix, name))
 
 def generate_signal_emit_parameter_list(proxy_typename, arguments):
     args = arguments.getElementsByTagName("arg")
 
     parameters = []
     parameters.append(proxy_typename + " *object")
-    generate_specific_parameter_list(parameters, args)
+    generate_specific_parameter_list(parameters, args, "arg")
 
     return ", ".join(parameters)
 
@@ -151,17 +156,17 @@ def generate_method_call_parameter_list(proxy_typename, arguments):
 
     parameters = []
     parameters.append(proxy_typename + " *proxy")
-    generate_specific_parameter_list(parameters, args, "in")
+    generate_specific_parameter_list(parameters, args, "arg", "in")
+    generate_specific_parameter_list(parameters, args, "*out", "out")
     parameters.append("GCancellable *cancellable")
-    parameters.append("GAsyncReadyCallback callback")
-    parameters.append("gpointer user_data")
+    parameters.append("GError **error")
 
     return ", ".join(parameters)
 
 def generate_proxy_typename(c_namespace, iface_name):
     return re.sub(r"_", r"", c_namespace) + iface_name;
 
-def write_documentation(c_namespace, prefix, proxy_typename, generate_parameter_list, members, hfile):
+def write_documentation(c_namespace, rettype, prefix, suffix, proxy_typename, generate_parameter_list, members, hfile):
     for m in members:
         if not m.comment_lines:
             continue
@@ -169,10 +174,21 @@ def write_documentation(c_namespace, prefix, proxy_typename, generate_parameter_
         print(r"/*!", file = hfile)
 
         name = m.node.getAttribute("name")
-        print(r" * \fn void " + concat_c_names(prefix, name) + "(" + generate_parameter_list(proxy_typename, m.node) + ")", file = hfile)
+        fnname = concat_c_names(prefix, name)
+
+        if suffix:
+            see_also = fnname
+            fnname = concat_c_names(see_also, suffix)
+        else:
+            see_also = None
+
+        print(r" * \fn " + rettype + " " + fnname + "(" + generate_parameter_list(proxy_typename, m.node) + ")", file = hfile)
         print(r" *", file = hfile)
 
         print(m.get_comment(r" * "), file = hfile)
+
+        if see_also:
+            print(" *\n * \\see #" + see_also + "()", file = hfile)
 
         print(r" */", file = hfile)
 
@@ -228,17 +244,17 @@ Interfaces of _""" + component_name + "_:", file = mdfile)
 
         if len(all_signals) > 0:
             write_section("Signals", "emitted", iface_name, mdfile)
-            write_table("Signal", fnname_prefix + "_emit", all_signals, mdfile)
-            write_documentation(c_namespace, fnname_prefix + "_emit", proxy_typename, generate_signal_emit_parameter_list, all_signals, hfile)
+            write_table("Signal", fnname_prefix + "_emit", None, all_signals, mdfile)
+            write_documentation(c_namespace, "void", fnname_prefix + "_emit", None, proxy_typename, generate_signal_emit_parameter_list, all_signals, hfile)
 
         if len(all_methods) > 0:
             write_section("Methods", "implemented", iface_name, mdfile)
-            write_table("Method", fnname_prefix + "_call", all_methods, mdfile)
-            write_documentation(c_namespace, fnname_prefix + "_call", proxy_typename, generate_method_call_parameter_list, all_methods, hfile)
+            write_table("Method", fnname_prefix + "_call", "sync", all_methods, mdfile)
+            write_documentation(c_namespace, "gboolean", fnname_prefix + "_call", "sync", proxy_typename, generate_method_call_parameter_list, all_methods, hfile)
 
         if len(all_properties) > 0:
             write_section("Properties", "exposed", iface_name, mdfile)
-            write_table("Property", "FIXME", all_properties, iface_name, mdfile)
+            write_table("Property", "FIXME", None, all_properties, mdfile)
             error_exit("Exporting properties documentation is not correctly implemented")
 
 
