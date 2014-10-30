@@ -149,22 +149,22 @@
         </method>
 
         <!--
-        Get URI for given item in given list.
+        Get list of URIs for given item in given list.
 
         \param arg_list_id, arg_item_id
-            List item whose URI should be returned.
-        \param out_uri
-            A string containing the URI the item refers to. In case the item is
-            not associated with an URI (e.g., directory entries), an empty
-            string is returned.
+            List item whose associated URIs should be returned.
+        \param out_uri_list
+            An array of strings containing the URI the item refers to. In case
+            the item is not associated with any URI (e.g., directory entries),
+            an empty string is returned.
         \param proxy, cancellable, error GDBus clutter.
 
         \returns True on success, false on error.
         -->
-        <method name="GetURI">
+        <method name="GetURIs">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
-            <arg name="uri" type="s" direction="out"/>
+            <arg name="uri_list" type="as" direction="out"/>
         </method>
 
 
