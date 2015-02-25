@@ -66,7 +66,7 @@
         </method>
 
         <!--
-        Check if a range on list items is readily available.
+        Check if a range of list items is readily available.
 
         \param arg_list_id, arg_first_item_id, arg_count, out_error_code,
             out_first_item
