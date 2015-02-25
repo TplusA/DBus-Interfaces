@@ -145,6 +145,10 @@ dbus_output_type_to_ctype = {
     "s": "gchar *",
 }
 
+dbus_property_type_to_ctype = {
+    "as": "const gchar *const *"
+}
+
 def generate_specific_parameter_list(parameters, args, prefix, required_direction = None):
     if required_direction == "in":
         direction_specific_dbus_type_to_ctype = dbus_input_type_to_ctype
@@ -176,6 +180,24 @@ def generate_specific_parameter_list(parameters, args, prefix, required_directio
 
         parameters.append(c_type + " " + concat_c_names(prefix, name))
 
+def generate_specific_parameter_list_for_property(parameters, prop):
+    name = prop.getAttribute("name")
+    dbus_type = prop.getAttribute("type")
+
+    if dbus_type in dbus_type_to_ctype:
+        c_type = dbus_type_to_ctype[dbus_type]
+    elif dbus_input_type_to_ctype and dbus_type in dbus_input_type_to_ctype:
+        c_type = dbus_input_type_to_ctype[dbus_type]
+    elif dbus_type in dbus_property_type_to_ctype:
+        c_type = dbus_property_type_to_ctype[dbus_type]
+    elif len(dbus_type) > 1:
+        c_type = "GVariant *"
+    else:
+        error_exit('Unsupported D-Bus type "' + dbus_type + '" used for property "' + name + '"')
+
+    parameters.append(c_type + " value")
+
+
 def generate_signal_emit_parameter_list(proxy_typename, arguments):
     args = arguments.getElementsByTagName("arg")
 
@@ -194,6 +216,13 @@ def generate_method_call_parameter_list(proxy_typename, arguments):
     generate_specific_parameter_list(parameters, args, "*out", "out")
     parameters.append("GCancellable *cancellable")
     parameters.append("GError **error")
+
+    return ", ".join(parameters)
+
+def generate_property_set_parameter_list(proxy_typename, arguments):
+    parameters = []
+    parameters.append(proxy_typename + " *object")
+    generate_specific_parameter_list_for_property(parameters, arguments)
 
     return ", ".join(parameters)
 
@@ -288,8 +317,8 @@ Interfaces of _""" + component_name + "_:", file = mdfile)
 
         if len(all_properties) > 0:
             write_section("Properties", "exposed", iface_name, mdfile)
-            write_table("Property", "FIXME", None, all_properties, mdfile)
-            error_exit("Exporting properties documentation is not correctly implemented")
+            write_table("Property", fnname_prefix + "_set", None, all_properties, mdfile)
+            write_documentation(c_namespace, "void", fnname_prefix + "_set", None, proxy_typename, generate_property_set_parameter_list, all_properties, hfile)
 
 
 def usage(exit_code = 1):
