@@ -30,7 +30,7 @@
             <arg type="o" name="Path">
             </arg>
         </signal>
-        <property type="as" name="NeverQuit" access="readwrite">
+        <property type="b" name="NeverQuit" access="readwrite">
         </property>
         <property type="as" name="WhiteListEntries" access="readwrite">
         </property>
