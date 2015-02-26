@@ -99,12 +99,19 @@ def write_section(section_name, verb, iface_name, f):
     print("\n\\section " + ifacename_to_refname(section_name.lower(), iface_name) + " " + section_name, file = f)
     print("\nHere is a list of " + section_name.lower() + " " + verb + " by the <tt>" + iface_name + "</tt> interface:\n", file = f)
 
-def write_table(kind, prefix, suffix, members, mdfile):
+def get_partial_name_for_c_function(name, accept_all_names):
+    if accept_all_names or name.lower() != "type":
+        return name
+    else:
+        return name + "_"
+
+def write_table(kind, prefix, suffix, members, accept_all_names, mdfile):
     table_rows = [[kind + " name", "Related function"]]
 
     for m in members:
         name = m.node.getAttribute("name")
-        fnname = concat_c_names(prefix, name)
+        name_in_fn = get_partial_name_for_c_function(name, accept_all_names)
+        fnname = concat_c_names(prefix, name_in_fn)
 
         if suffix:
             fnname = concat_c_names(fnname, suffix)
@@ -229,7 +236,7 @@ def generate_property_set_parameter_list(proxy_typename, arguments):
 def generate_proxy_typename(c_namespace, iface_name):
     return re.sub(r"_", r"", c_namespace) + iface_name;
 
-def write_documentation(c_namespace, rettype, prefix, suffix, proxy_typename, generate_parameter_list, members, hfile):
+def write_documentation(c_namespace, rettype, prefix, suffix, proxy_typename, generate_parameter_list, members, accept_all_names, hfile):
     for m in members:
         if not m.comment_lines:
             continue
@@ -237,7 +244,8 @@ def write_documentation(c_namespace, rettype, prefix, suffix, proxy_typename, ge
         print(r"/*!", file = hfile)
 
         name = m.node.getAttribute("name")
-        fnname = concat_c_names(prefix, name)
+        name_in_fn = get_partial_name_for_c_function(name, accept_all_names)
+        fnname = concat_c_names(prefix, name_in_fn)
 
         if suffix:
             see_also = fnname
@@ -307,18 +315,18 @@ Interfaces of _""" + component_name + "_:", file = mdfile)
 
         if len(all_signals) > 0:
             write_section("Signals", "emitted", iface_name, mdfile)
-            write_table("Signal", fnname_prefix + "_emit", None, all_signals, mdfile)
-            write_documentation(c_namespace, "void", fnname_prefix + "_emit", None, proxy_typename, generate_signal_emit_parameter_list, all_signals, hfile)
+            write_table("Signal", fnname_prefix + "_emit", None, all_signals, True, mdfile)
+            write_documentation(c_namespace, "void", fnname_prefix + "_emit", None, proxy_typename, generate_signal_emit_parameter_list, all_signals, True, hfile)
 
         if len(all_methods) > 0:
             write_section("Methods", "implemented", iface_name, mdfile)
-            write_table("Method", fnname_prefix + "_call", "sync", all_methods, mdfile)
-            write_documentation(c_namespace, "gboolean", fnname_prefix + "_call", "sync", proxy_typename, generate_method_call_parameter_list, all_methods, hfile)
+            write_table("Method", fnname_prefix + "_call", "sync", all_methods, True, mdfile)
+            write_documentation(c_namespace, "gboolean", fnname_prefix + "_call", "sync", proxy_typename, generate_method_call_parameter_list, all_methods, True, hfile)
 
         if len(all_properties) > 0:
             write_section("Properties", "exposed", iface_name, mdfile)
-            write_table("Property", fnname_prefix + "_set", None, all_properties, mdfile)
-            write_documentation(c_namespace, "void", fnname_prefix + "_set", None, proxy_typename, generate_property_set_parameter_list, all_properties, hfile)
+            write_table("Property", fnname_prefix + "_set", None, all_properties, False, mdfile)
+            write_documentation(c_namespace, "void", fnname_prefix + "_set", None, proxy_typename, generate_property_set_parameter_list, all_properties, False, hfile)
 
 
 def usage(exit_code = 1):
