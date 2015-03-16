@@ -190,4 +190,67 @@
         <property type="x" name="Size" access="read">
         </property>
     </interface>
+
+    <interface name="org.gnome.UPnP.MediaItem2">
+        <method name="GetCompatibleResources">
+            <arg type="s" name="ProtocolInfo" direction="in">
+            </arg>
+            <arg type="as" name="Filter" direction="in">
+            </arg>
+            <arg type="a{sv}" name="Resources" direction="out">
+            </arg>
+        </method>
+        <property type="as" name="URLs" access="read">
+        </property>
+        <property type="s" name="MIMEType" access="read">
+        </property>
+        <property type="x" name="Size" access="read">
+        </property>
+        <property type="s" name="Artist" access="read">
+        </property>
+        <property type="s" name="Album" access="read">
+        </property>
+        <property type="s" name="Date" access="read">
+        </property>
+        <property type="s" name="Genre" access="read">
+        </property>
+        <property type="s" name="DLNAProfile" access="read">
+        </property>
+        <property type="i" name="Duration" access="read">
+        </property>
+        <property type="i" name="Bitrate" access="read">
+        </property>
+        <property type="i" name="SampleRate" access="read">
+        </property>
+        <property type="i" name="BitsPerSample" access="read">
+        </property>
+        <property type="i" name="Width" access="read">
+        </property>
+        <property type="i" name="Height" access="read">
+        </property>
+        <property type="i" name="ColorDepth" access="read">
+        </property>
+        <property type="o" name="Thumbnail" access="read">
+        </property>
+        <property type="o" name="AlbumArt" access="read">
+        </property>
+        <property type="i" name="TrackNumber" access="read">
+        </property>
+        <property type="aa{sv}" name="Resources" access="read">
+        </property>
+        <property type="s" name="AlbumArtURL" access="read">
+        </property>
+        <property type="o" name="RefPath" access="read">
+        </property>
+        <property type="as" name="Artists" access="read">
+        </property>
+        <property type="a{sb}" name="DLNAConversion" access="read">
+        </property>
+        <property type="a{sb}" name="DLNAFlags" access="read">
+        </property>
+        <property type="a{sb}" name="DLNAOperation" access="read">
+        </property>
+        <property type="u" name="UpdateCount" access="read">
+        </property>
+    </interface>
 </node>
