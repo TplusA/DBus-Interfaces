@@ -39,11 +39,9 @@
         \param arg_count
             Maximum number of list items to return.
         \param out_error_code
-            The D-Bus method returns an error code to the caller, which is either
-            - 0 in case no error occurred;
-            - 1 in case the ID passed in \p arg_list_id list was invalid;
-            - 2 in case of an I/O error (e.g., broken network connection or
-                read error on physical medium).
+            The D-Bus method returns an error code to the caller. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
         \param out_first_item
             ID of the first item in the list. This is basically just a copy of
             the \p arg_first_item_id parameter for the client's convenience (no
