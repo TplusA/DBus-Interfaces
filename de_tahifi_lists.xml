@@ -105,6 +105,10 @@
             \p arg_item_id. This can be used as a starting point when no other
             lists are known yet. Consecutive requests must use the returned
             child list ID to reference the root list.
+        \param out_error_code
+            The D-Bus method returns an error code to the caller. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
         \param out_child_list_id
             The D-Bus method returns either the requested list ID, or 0 in case
             of an error (e.g., the specified list item does not exist or is not
@@ -116,6 +120,7 @@
         <method name="GetListId">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
             <arg name="child_list_id" type="u" direction="out"/>
         </method>
 
@@ -151,6 +156,10 @@
 
         \param arg_list_id, arg_item_id
             List item whose associated URIs should be returned.
+        \param out_error_code
+            The D-Bus method returns an error code to the caller. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
         \param out_uri_list
             An array of strings containing the URI the item refers to. In case
             the item is not associated with any URI (e.g., directory entries),
@@ -162,6 +171,7 @@
         <method name="GetURIs">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
             <arg name="uri_list" type="as" direction="out"/>
         </method>
 
