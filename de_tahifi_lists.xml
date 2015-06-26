@@ -69,8 +69,8 @@
         \param arg_list_id, arg_first_item_id, arg_count, out_error_code,
             out_first_item
             These arguments are the same as for \c GetRange, but this method
-            does not block and it returns the number of items that would be
-            returned instead of the list itself.
+            does not block on server side and it returns the number of items
+            that would be returned instead of the list itself.
         \param out_number_of_items
             The number of items that would be returned by \c GetRange.
         \param proxy, cancellable, error GDBus clutter.
