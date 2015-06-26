@@ -63,6 +63,14 @@ class ListError
     {
         return *this != Code::OK;
     }
+
+    static Code raw_to_code(unsigned int raw_error_code)
+    {
+        if(raw_error_code <= Code::LAST_ERROR_CODE)
+            return Code(raw_error_code);
+        else
+            return Code::INTERNAL;
+    }
 };
 
 template <typename T>

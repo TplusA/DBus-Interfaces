@@ -49,6 +49,9 @@ enum DE_TAHIFI_LISTS_ERRORS_ENUM_NAME
 
     /*! Authentication with some external system has failed. */
     DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(AUTHENTICATION),
+
+    /*! Stable name for the highest-value error code. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(LAST_ERROR_CODE) = DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(AUTHENTICATION),
 };
 
 #undef DE_TAHIFI_LISTS_ERRORS_ENUM_NAME
