@@ -24,8 +24,12 @@
 class ListError
 {
   public:
+#ifndef DE_TAHIFI_LISTS_ERRORS_ENUM_NAME
 #define DE_TAHIFI_LISTS_ERRORS_ENUM_NAME        Code
+#endif /* !DE_TAHIFI_LISTS_ERRORS_ENUM_NAME */
+#ifndef DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE
 #define DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(V)    V
+#endif /* !DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE */
 #include "de_tahifi_lists_errors.h"
 
   private:
