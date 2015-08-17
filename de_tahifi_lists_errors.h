@@ -35,6 +35,9 @@ enum DE_TAHIFI_LISTS_ERRORS_ENUM_NAME
     /*! An internal error occurred (a bug). */
     DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(INTERNAL),
 
+    /*! Interrupted by user. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(INTERRUPTED),
+
     /*! The ID passed into the D-Bus method was invalid. */
     DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(INVALID_ID),
 
