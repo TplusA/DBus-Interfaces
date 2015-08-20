@@ -85,6 +85,7 @@ static T& operator<<(T& os, const ::ListError &error)
     {
         "OK",
         "INTERNAL",
+        "INTERRUPTED",
         "INVALID_ID",
         "PHYSICAL_MEDIA_IO",
         "NET_IO",
