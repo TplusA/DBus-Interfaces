@@ -33,6 +33,35 @@ class ListError
 #include "de_tahifi_lists_errors.h"
 
   private:
+    /*!
+     * String representations of the error codes.
+     *
+     * \attention
+     *     This array must be sorted according to the values in the
+     *     #ListError::Code enum and it must match its size.
+     *
+     * \attention
+     *     This array must be explicitly instantiated in some C++ file,
+     *     otherwise the linker will bail out with an error. Copy the
+     *     following definition to some implementation file so that the linker
+     *     can take it from there:
+     *     \code constexpr const char *ListError::names_[]; \endcode
+     */
+    static constexpr const char *names_[] =
+    {
+        "OK",
+        "INTERNAL",
+        "INTERRUPTED",
+        "INVALID_ID",
+        "PHYSICAL_MEDIA_IO",
+        "NET_IO",
+        "PROTOCOL",
+        "AUTHENTICATION",
+    };
+
+    static_assert(sizeof(names_) / sizeof(names_[0]) == static_cast<size_t>(ListError::Code::LAST_ERROR_CODE) + 1U,
+                  "Mismatch between error codes enum and error strings");
+
     Code error_code_;
 
   public:
@@ -75,31 +104,24 @@ class ListError
         else
             return Code::INTERNAL;
     }
+
+    constexpr static const char *code_to_string(Code error)
+    {
+        return error < sizeof(names_) / sizeof(names_[0])
+            ? names_[error]
+            : "***Invalid ListError code***";
+    }
+
+    constexpr const char *to_string() const
+    {
+        return ListError::code_to_string(error_code_);
+    }
 };
 
 template <typename T>
 static T& operator<<(T& os, const ::ListError &error)
 {
-    /* must be sorted according to #ListError::Code enum */
-    static constexpr const char *names[] =
-    {
-        "OK",
-        "INTERNAL",
-        "INTERRUPTED",
-        "INVALID_ID",
-        "PHYSICAL_MEDIA_IO",
-        "NET_IO",
-        "PROTOCOL",
-        "AUTHENTICATION",
-    };
-
-    static constexpr char prefix[] = "ListError::Code::";
-
-    if(error.get_raw_code() < sizeof(names) / sizeof(names[0]))
-        os << prefix << names[error.get_raw_code()];
-    else
-        os << "***Invalid ListError code***";
-
+    os << "ListError::Code::" << error.to_string();
     return os;
 }
 
