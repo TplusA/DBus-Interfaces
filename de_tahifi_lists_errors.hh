@@ -78,7 +78,7 @@ class ListError
         return error_code_;
     }
 
-    uint8_t get_raw_code() const noexcept { return uint8_t(error_code_); }
+    constexpr uint8_t get_raw_code() const noexcept { return uint8_t(error_code_); }
 
     ListError &operator=(Code code) noexcept
     {
@@ -86,22 +86,22 @@ class ListError
         return *this;
     }
 
-    bool operator==(Code code) const noexcept
+    constexpr bool operator==(Code code) const noexcept
     {
         return error_code_ == code;
     }
 
-    bool operator!=(Code code) const noexcept
+    constexpr bool operator!=(Code code) const noexcept
     {
         return !(*this == code);
     }
 
-    bool operator==(const ListError &other) const noexcept
+    constexpr bool operator==(const ListError &other) const noexcept
     {
         return *this == other.error_code_;
     }
 
-    bool failed() const noexcept
+    constexpr bool failed() const noexcept
     {
         return *this != Code::OK;
     }
