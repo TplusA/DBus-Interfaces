@@ -69,6 +69,10 @@ class ListError
         error_code_(error_code)
     {}
 
+    constexpr explicit ListError(unsigned int error_code) throw():
+        error_code_(raw_to_code(error_code))
+    {}
+
     uint8_t get_raw_code() const noexcept { return uint8_t(error_code_); }
 
     ListError &operator=(Code code) noexcept
@@ -97,12 +101,11 @@ class ListError
         return *this != Code::OK;
     }
 
-    static Code raw_to_code(unsigned int raw_error_code)
+    constexpr static Code raw_to_code(unsigned int raw_error_code)
     {
-        if(raw_error_code <= Code::LAST_ERROR_CODE)
-            return Code(raw_error_code);
-        else
-            return Code::INTERNAL;
+        return (raw_error_code <= Code::LAST_ERROR_CODE)
+            ? Code(raw_error_code)
+            : Code::INTERNAL;
     }
 
     constexpr static const char *code_to_string(Code error)
