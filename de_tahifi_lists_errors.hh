@@ -73,6 +73,11 @@ class ListError
         error_code_(raw_to_code(error_code))
     {}
 
+    constexpr Code get() const noexcept
+    {
+        return error_code_;
+    }
+
     uint8_t get_raw_code() const noexcept { return uint8_t(error_code_); }
 
     ListError &operator=(Code code) noexcept
