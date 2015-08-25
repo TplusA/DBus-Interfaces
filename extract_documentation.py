@@ -157,10 +157,10 @@ dbus_property_type_to_ctype = {
     "as": "const gchar *const *"
 }
 
-def generate_specific_parameter_list(parameters, args, prefix, required_direction = None):
+def generate_specific_parameter_list(parameters, args, prefix, required_direction = None, is_signal = False):
     if required_direction == "in":
         direction_specific_dbus_type_to_ctype = dbus_input_type_to_ctype
-    elif required_direction == "out":
+    elif required_direction == "out" or is_signal:
         direction_specific_dbus_type_to_ctype = dbus_output_type_to_ctype
     else:
         direction_specific_dbus_type_to_ctype = None
@@ -211,7 +211,7 @@ def generate_signal_emit_parameter_list(proxy_typename, arguments):
 
     parameters = []
     parameters.append(proxy_typename + " *object")
-    generate_specific_parameter_list(parameters, args, "arg")
+    generate_specific_parameter_list(parameters, args, "arg", is_signal = True)
 
     return ", ".join(parameters)
 
