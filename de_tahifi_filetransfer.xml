@@ -1,0 +1,95 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/filetransfer">
+    <interface name="de.tahifi.FileTransfer">
+        <!--
+        Start downloading a file from the internet.
+
+        \param arg_url
+            URL of the file to be downloaded.
+
+        \param arg_ticks
+            How many ticks to use for progress feedback. Use 100 for percent,
+            1000 for per mill scale, 0 for no progress feedback.
+
+        \param out_id
+            ID of the download used in D-Bus signals.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+
+        \returns True on success, false on error.
+        -->
+        <method name="Download">
+            <arg name="url" type="s" direction="in"/>
+            <arg name="ticks" type="u" direction="in"/>
+            <arg name="id" type="u" direction="out"/>
+        </method>
+
+        <!--
+        Stop file transfer with given ID.
+
+        The temporary file is automatically deleted if this method is
+        successfully called.
+
+        \param arg_id
+            Which transfer to cancel.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="Cancel">
+            <arg name="id" type="u" direction="in"/>
+        </method>
+
+        <!--
+        Report file transfer progress to anyone who cares.
+
+        \param object
+            D-Bus interface object.
+
+        \param arg_id
+            ID of the transfer this progress report refers to; ID as returned
+            by the \c de.tahifi.FileTransfer.Download() method.
+
+        \param arg_tick
+            Progress in ticks, a number between 0 and \p arg_total_ticks
+            (including boundaries).
+
+        \param arg_total_ticks
+            Maximum number of ticks as configured by the
+            \c de.tahifi.FileTransfer.Download() method.
+        -->
+        <signal name="Progress">
+            <arg name="id" type="u"/>
+            <arg name="tick" type="u" direction="in"/>
+            <arg name="total_ticks" type="u" direction="in"/>
+        </signal>
+
+        <!--
+        Report end of file transfer.
+
+        \param arg_id
+            ID of the transfer this progress report refers to; ID as returned
+            by the \c de.tahifi.FileTransfer.Download() method.
+
+        \param arg_error_code
+            This error code indicates whether or not the transfer was
+            successful. Check file de_tahifi_lists_errors.h or
+            de_tahifi_lists_errors.hh for possible values and their
+            documentation. In case the error code is not 0, the temporary file
+            will have been deleted already by the time this signal is emitted.
+
+        \param arg_path
+            The name of the file as a full path on the local device, or the
+            empty string in case of any error. In case no error occurred, the
+            file must be manually deleted by the caller of the
+            \c de.tahifi.FileTransfer.Download() method.
+        -->
+        <signal name="Done">
+            <arg name="id" type="u"/>
+            <arg name="error_code" type="y"/>
+            <arg name="path" type="s"/>
+        </signal>
+    </interface>
+</node>
