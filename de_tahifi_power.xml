@@ -1,0 +1,159 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/power">
+    <!--
+    Client interface for requesting power status and status changes.
+
+    Methods defined by this interface can be invoked by clients that
+    -->
+    <interface name="de.tahifi.Power.Client">
+        <!--
+        Tell power daemon that we must be part of the power down sequence.
+        -->
+        <method name="Hi"/>
+
+        <!--
+        Tell power daemon we don't care about power status changes (anymore).
+        -->
+        <method name="Bye"/>
+
+        <!--
+        Retrieve current power status.
+
+        This method may be invoked by any client, saying Hi beforehand is not
+        necessary.
+
+        \param out_cookie
+            Cookie for the current power down sequence, if any.
+        \param out_status
+            Power status. 0 for up and running; 1 for stop in progress; 2 for
+            stopped (safe to power off).
+        \param out_forced
+            If the status is non-zero, then this boolean indicates whether or
+            not the power down sequence is enforced.
+        \param out_reason
+            The reason for powering down (always empty for status 0).
+        \param proxy, cancellable, error  GDBus clutter.
+        -->
+        <method name="GetStatus">
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="status" type="y" direction="out"/>
+            <arg name="forced" type="b" direction="out"/>
+            <arg name="reason" type="s" direction="out"/>
+        </method>
+
+        <!--
+        Request stopping the device.
+
+        \param arg_reason
+            What has triggered the device stop request. Must not be empty.
+        \param arg_forced
+            Whether or not shutting down is strictly necessary. In case this is
+            false, the power off sequence may be aborted. If this parameter is
+            true, then power *will* be cut, so powering off is not an option,
+            but fact.
+        \param proxy, cancellable, error  GDBus clutter.
+        -->
+        <method name="StopRequest">
+            <arg name="forced" type="b" direction="in"/>
+            <arg name="reason" type="s" direction="in"/>
+        </method>
+
+        <!--
+        Tell power daemon that powering off is OK for us.
+
+        Each client that has registered with de.tahifi.Power.Client.Hi should
+        invoke this method after seeing a de.tahifi.Power.Events.StopRequested
+        signal. It must use the cookie sent along with that signal so that race
+        conditions during transients are eliminated.
+
+        The power down sequence will only succeed if all registered clients
+        answer by invoking this method.
+
+        Invoking this method while not powering down has no effect because the
+        cookie will most probably be invalid.
+
+        \param arg_cookie
+            Cookie as obtained from de.tahifi.Power.Events.StopRequested or
+            de.tahifi.Power.Client.GetStatus.
+        \param proxy, cancellable, error  GDBus clutter.
+        -->
+        <method name="Ready">
+            <arg name="cookie" type="u" direction="in"/>
+        </method>
+
+        <!--
+        Request abortion of power down sequence.
+
+        As an alternative to de.tahifi.Power.Client.Ready, this method may be
+        invoked by clients that have registered with de.tahifi.Power.Client.Hi
+        to request abortion of the power down sequence and to keep the system
+        running.
+
+        Note that invoking this method for forced power down is a programming
+        error. In this case, the power daemon will interpret an invokation of
+        this method as signal that the client is ready for power off. The only
+        way for a client to extend power off time is to avoid any method
+        invokation in this situation (until power is ultimately switched off
+        anyway).
+
+        \param arg_cookie
+            Cookie as obtained from de.tahifi.Power.Events.StopRequested or
+            de.tahifi.Power.Client.GetStatus.
+        \param proxy, cancellable, error  GDBus clutter.
+        -->
+        <method name="PleaseDont">
+            <arg name="cookie" type="u" direction="in"/>
+        </method>
+    </interface>
+
+    <!--
+    Interface for retrieving device power status and status changes.
+    -->
+    <interface name="de.tahifi.Power.Events">
+        <!--
+        Inform all listeners that the device should prepare for power off.
+
+        \param arg_cookie
+            A random value identifying the power down sequence. This avoids
+            race conditions in case the power down sequence is aborted and then
+            immediately restarted.
+        \param arg_forced
+            Whether or not this power down is strictly necessary. If set to
+            true, then there is no way to avoid power down state, and power
+            will be cut soon.
+        \param arg_reason
+            The reason for powering down (at this point probably only useful
+            for debugging and logging purposes).
+        \param object  GDBus clutter.
+        -->
+        <signal name="StopRequested">
+            <arg name="cookie" type="u"/>
+            <arg name="forced" type="b"/>
+            <arg name="reason" type="s"/>
+        </signal>
+
+        <!--
+        Inform all listeners that the power down sequence has been aborted.
+
+        \param arg_cookie
+            Cookie for the aborted power down sequence.
+        \param object  GDBus clutter.
+        -->
+        <signal name="Aborted">
+            <arg name="cookie" type="u"/>
+        </signal>
+
+        <!--
+        Inform all listeners that the power down sequence has finished.
+
+        When this signal is emitted, the device may be safely powered off.
+
+        It depends on the system what exactly should happen at this point. A
+        listener may toggle a GPIO to switch off the power supply the hard way;
+        it may shutdown to suspend mode; it may send some message to other
+        devices; or it may even just sit there and do nothing.
+        -->
+        <signal name="Stopped"/>
+    </interface>
+</node>
