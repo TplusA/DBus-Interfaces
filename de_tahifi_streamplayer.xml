@@ -15,6 +15,7 @@
             <arg name="stop_units" type="s" direction="in"/>
             <arg name="keep_first_n_entries" type="n" direction="in"/>
             <arg name="fifo_overflow" type="b" direction="out"/>
+            <arg name="is_playing" type="b" direction="out"/>
         </method>
     </interface>
 
