@@ -9,18 +9,42 @@
     <interface name="de.tahifi.Power.Client">
         <!--
         Tell power daemon that we must be part of the power down sequence.
+
+        This method may fail in case a previously active power down sequence
+        has already succeeded, i.e., a power down request was issued and all
+        previously registered clients have agreed that powering down is OK.
+
+        Consequently, programs should invoke this method _before_ doing
+        anything that may mess up the system in the event of power loss, and
+        they should not start doing any such things in case this method fails.
+
+        \param out_cookie, out_forced, out_reason
+            In case a power down sequence is already active upon registration,
+            then the cookie will have a positive value. In this case, the
+            parameters have the same meaning as those posted with the
+            \c de.tahifi.Power.Events.StopRequested signal, and the registered
+            client is required to react the same way as it would do had it
+            received this signal.
+        \param proxy, cancellable, error  GDBus clutter.
         -->
-        <method name="Hi"/>
+        <method name="Hi">
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="forced" type="b" direction="out"/>
+            <arg name="reason" type="s" direction="out"/>
+        </method>
 
         <!--
         Tell power daemon we don't care about power status changes (anymore).
+
+        Invoking this method during a power down sequence is equivalent to
+        agreeing to powering down.
         -->
         <method name="Bye"/>
 
         <!--
         Retrieve current power status.
 
-        This method may be invoked by any client, saying Hi beforehand is not
+        This method may be invoked by any client, saying "Hi" beforehand is not
         necessary.
 
         \param out_cookie
@@ -45,13 +69,13 @@
         <!--
         Request stopping the device.
 
-        \param arg_reason
-            What has triggered the device stop request. Must not be empty.
         \param arg_forced
             Whether or not shutting down is strictly necessary. In case this is
             false, the power off sequence may be aborted. If this parameter is
             true, then power *will* be cut, so powering off is not an option,
             but fact.
+        \param arg_reason
+            What has triggered the device stop request. Must not be empty.
         \param proxy, cancellable, error  GDBus clutter.
         -->
         <method name="StopRequest">
@@ -147,7 +171,9 @@
         <!--
         Inform all listeners that the power down sequence has finished.
 
-        When this signal is emitted, the device may be safely powered off.
+        When this signal is emitted, the device may be safely powered off. No
+        cookie is sent along because it doesn't matter anymore. This state is
+        irrevocable.
 
         It depends on the system what exactly should happen at this point. A
         listener may toggle a GPIO to switch off the power supply the hard way;
