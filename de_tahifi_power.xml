@@ -18,6 +18,10 @@
         anything that may mess up the system in the event of power loss, and
         they should not start doing any such things in case this method fails.
 
+        \param arg_client_name
+            Unique name of the client.
+        \param out_client_id
+            ID assigned to the client, to be used in other method calls.
         \param out_cookie, out_forced, out_reason
             In case a power down sequence is already active upon registration,
             then the cookie will have a positive value. In this case, the
@@ -28,6 +32,8 @@
         \param proxy, cancellable, error  GDBus clutter.
         -->
         <method name="Hi">
+            <arg name="client_name" type="s" direction="in"/>
+            <arg name="client_id" type="u" direction="out"/>
             <arg name="cookie" type="u" direction="out"/>
             <arg name="forced" type="b" direction="out"/>
             <arg name="reason" type="s" direction="out"/>
@@ -38,8 +44,14 @@
 
         Invoking this method during a power down sequence is equivalent to
         agreeing to powering down.
+
+        \param arg_client_id
+            ID assigned to the client at registration time.
+        \param proxy, cancellable, error  GDBus clutter.
         -->
-        <method name="Bye"/>
+        <method name="Bye">
+            <arg name="client_id" type="u" direction="in"/>
+        </method>
 
         <!--
         Retrieve current power status.
@@ -97,12 +109,15 @@
         Invoking this method while not powering down has no effect because the
         cookie will most probably be invalid.
 
+        \param arg_client_id
+            ID assigned to the client at registration time.
         \param arg_cookie
             Cookie as obtained from de.tahifi.Power.Events.StopRequested or
             de.tahifi.Power.Client.GetStatus.
         \param proxy, cancellable, error  GDBus clutter.
         -->
         <method name="Ready">
+            <arg name="client_id" type="u" direction="in"/>
             <arg name="cookie" type="u" direction="in"/>
         </method>
 
@@ -121,12 +136,15 @@
         invokation in this situation (until power is ultimately switched off
         anyway).
 
+        \param arg_client_id
+            ID assigned to the client at registration time.
         \param arg_cookie
             Cookie as obtained from de.tahifi.Power.Events.StopRequested or
             de.tahifi.Power.Client.GetStatus.
         \param proxy, cancellable, error  GDBus clutter.
         -->
         <method name="PleaseDont">
+            <arg name="client_id" type="u" direction="in"/>
             <arg name="cookie" type="u" direction="in"/>
         </method>
     </interface>
