@@ -4,7 +4,9 @@
     <!--
     Client interface for requesting power status and status changes.
 
-    Methods defined by this interface can be invoked by clients that
+    Methods defined by this interface can be invoked by clients that need to
+    know about power status changes. These clients may react to imminent power
+    loss by closing files and syncing them.
     -->
     <interface name="de.tahifi.Power.Client">
         <!--
