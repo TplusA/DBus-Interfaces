@@ -153,6 +153,10 @@ dbus_output_type_to_ctype = {
     "as": "gchar **",
 }
 
+dbus_signal_type_to_ctype = {
+    "s": "const gchar *",
+}
+
 dbus_property_type_to_ctype = {
     "as": "const gchar *const *"
 }
@@ -160,7 +164,9 @@ dbus_property_type_to_ctype = {
 def generate_specific_parameter_list(parameters, args, prefix, required_direction = None, is_signal = False):
     if required_direction == "in":
         direction_specific_dbus_type_to_ctype = dbus_input_type_to_ctype
-    elif required_direction == "out" or is_signal:
+    elif is_signal:
+        direction_specific_dbus_type_to_ctype = dbus_signal_type_to_ctype
+    elif required_direction == "out":
         direction_specific_dbus_type_to_ctype = dbus_output_type_to_ctype
     else:
         direction_specific_dbus_type_to_ctype = None
