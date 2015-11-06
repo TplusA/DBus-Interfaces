@@ -1,0 +1,114 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/mounta">
+    <!--
+    Interface for managing mounted devices.
+    -->
+    <interface name="de.tahifi.MounTA">
+        <!--
+        Retrieve list of devices and volumes mounted by the mount daemon.
+
+        The data sent by this method corresponds to the data sent by signals
+        \c de.tahifi.Mounta.NewUSBDevice and \c de.tahifi.Mounta.NewVolume.
+        Programs that are interested in monitoring mounts and unmounts should
+        call this function to initialze themselves on startup and then listen
+        to signals.
+
+        \param out_usbdevices
+            List of known USB mass storage devices. This is an array of
+            structures containing the same information as the parameters of
+            \c de.tahifi.MounTA.NewUSBDevice, in the same order.
+
+        \param out_volumes
+            List of mounted volumes. This is an array of structures containing
+            the same information as the parameters of
+            \c de.tahifi.MounTA.NewVolume, in the same order.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="GetAll">
+            <arg name="usbdevices" type="(ss(uu))" direction="out"/>
+            <arg name="volumes" type="(usss)" direction="out"/>
+        </method>
+
+        <!--
+        Emitted when a new USB mass storage device was discovered.
+
+        \param arg_devname
+            Name of the device as a human-readable string. This name is unique
+            and may be used as an identifier (a pretty long one, though).
+
+        \param arg_rootpath
+            Path to a directory which contains all mountpoints of all
+            partitions on the USB device. This directory will be empty if there
+            are no mountable partitions on the device.
+
+        \param arg_usbport
+            ID of the USB root hub and port on that hub the USB device is
+            (directly or indirectly) connected to. This information is
+            basically completely irrelevant for mounting and is only meant for
+            displaying purposes.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="NewUSBDevice">
+            <arg name="devname" type="s"/>
+            <arg name="rootpath" type="s"/>
+            <arg name="usbport" type="(uu)"/>
+        </signal>
+
+        <!--
+        Emitted when a new volume was mounted.
+
+        \param arg_number
+            Index of the volume on its device. This is usually a partition
+            number and is unique for the device.
+
+        \param arg_label
+            Name of the volume as read from the device. In case the volume
+            label is unavailable, the file system type is sent as a label
+            instead. This string is not unique.
+
+        \param arg_mountpoint
+            Complete path of the mountpoint of the volume.
+
+        \param arg_devname
+            Name of the device the volume belongs to. This will match the
+            human-readable name of a USB device.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="NewVolume">
+            <arg name="number" type="u"/>
+            <arg name="label" type="s"/>
+            <arg name="mountpoint" type="s"/>
+            <arg name="devname" type="s"/>
+        </signal>
+
+        <!--
+        Emitted when a whole device was removed.
+
+        Note that there will be no unmount or removal signals for volumes, only
+        for whole devices. Programs need to update their internal knowledge
+        about mounted volumes by associating the volumes with the name of their
+        originating device.
+
+        \param arg_devname
+            Name of the device as a human-readable string.
+
+        \param arg_rootpath
+            Path to the directory which contains all mountpoints for the
+            device.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="DeviceRemoved">
+            <arg name="devname" type="s"/>
+            <arg name="rootpath" type="s"/>
+        </signal>
+    </interface>
+</node>
