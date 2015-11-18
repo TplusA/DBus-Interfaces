@@ -8,7 +8,7 @@
         <method name="SetProperty">
             <arg name="name" type="s" direction="in"/>
             <arg name="value" type="v" direction="in"/>
-            </method>
+        </method>
         <method name="GetTechnologies">
             <arg name="technologies" type="a(oa{sv})" direction="out"/>
         </method>
