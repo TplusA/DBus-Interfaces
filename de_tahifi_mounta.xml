@@ -28,8 +28,8 @@
             GDBus clutter.
         -->
         <method name="GetAll">
-            <arg name="usbdevices" type="(ss(uu))" direction="out"/>
-            <arg name="volumes" type="(usss)" direction="out"/>
+            <arg name="usbdevices" type="a(ss(uu))" direction="out"/>
+            <arg name="volumes" type="a(usss)" direction="out"/>
         </method>
 
         <!--
