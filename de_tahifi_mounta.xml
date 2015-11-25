@@ -28,12 +28,15 @@
             GDBus clutter.
         -->
         <method name="GetAll">
-            <arg name="usbdevices" type="a(ss(uu))" direction="out"/>
-            <arg name="volumes" type="a(usss)" direction="out"/>
+            <arg name="usbdevices" type="a(qss(uu))" direction="out"/>
+            <arg name="volumes" type="a(ussq)" direction="out"/>
         </method>
 
         <!--
         Emitted when a new USB mass storage device was discovered.
+
+        \param arg_id
+            Internal positive device ID, basically a unique serial number.
 
         \param arg_devname
             Name of the device as a human-readable string. This name is unique
@@ -54,6 +57,7 @@
             GDBus clutter.
         -->
         <signal name="NewUSBDevice">
+            <arg name="id" type="q"/>
             <arg name="devname" type="s"/>
             <arg name="rootpath" type="s"/>
             <arg name="usbport" type="(uu)"/>
@@ -74,9 +78,8 @@
         \param arg_mountpoint
             Complete path of the mountpoint of the volume.
 
-        \param arg_devname
-            Name of the device the volume belongs to. This will match the
-            human-readable name of a USB device.
+        \param arg_parent_id
+            ID of the device this volume is stored on.
 
         \param object
             GDBus clutter.
@@ -85,7 +88,7 @@
             <arg name="number" type="u"/>
             <arg name="label" type="s"/>
             <arg name="mountpoint" type="s"/>
-            <arg name="devname" type="s"/>
+            <arg name="parent_id" type="q"/>
         </signal>
 
         <!--
@@ -96,8 +99,8 @@
         about mounted volumes by associating the volumes with the name of their
         originating device.
 
-        \param arg_devname
-            Name of the device as a human-readable string.
+        \param arg_id
+            Internal positive device ID.
 
         \param arg_rootpath
             Path to the directory which contains all mountpoints for the
@@ -107,7 +110,7 @@
             GDBus clutter.
         -->
         <signal name="DeviceRemoved">
-            <arg name="devname" type="s"/>
+            <arg name="id" type="q"/>
             <arg name="rootpath" type="s"/>
         </signal>
     </interface>
