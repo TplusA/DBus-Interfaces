@@ -23,6 +23,10 @@
         <method name="Start"/>
         <method name="Stop"/>
         <method name="Pause"/>
+        <method name="Seek">
+            <arg name="position" type="x" direction="in"/>
+            <arg name="position_units" type="s" direction="in"/>
+        </method>
 
         <signal name="NowPlaying">
             <arg name="id" type="q"/>
