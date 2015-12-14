@@ -4,6 +4,7 @@
     <interface name="de.tahifi.Streamplayer.URLFIFO">
         <method name="Clear">
             <arg name="keep_first_n_entries" type="n" direction="in"/>
+            <arg name="playing_id" type="u" direction="out"/>
             <arg name="queued_ids" type="aq" direction="out"/>
             <arg name="removed_ids" type="aq" direction="out"/>
         </method>
