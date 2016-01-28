@@ -20,6 +20,32 @@
 
         <signal name="RepeatModeToggle"/>
         <signal name="ShuffleModeToggle"/>
+
+        <!--
+        Set information about stream with given ID (for registers 75 and 76).
+
+        \param arg_stream_id
+            The ID of the stream the information belongs to. If this ID is
+            invalid, then the title and URL are ignored, and registers 75 and
+            76 are both set to the empty string.
+            *Note:* The source ID must not be #STREAM_ID_SOURCE_INVALID,
+            otherwise the method call will fail.
+
+        \param arg_title
+            Name of the playing stream. This should not be empty.
+
+        \param arg_url
+            URL of the playing stream. This shall never be empty, otherwise the
+            method will have the same effect as sending an invalid stream ID.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="SetStreamInfo">
+            <arg name="stream_id" type="q" direction="in"/>
+            <arg name="title" type="s" direction="in"/>
+            <arg name="url" type="s" direction="in"/>
+        </method>
     </interface>
 
     <interface name="de.tahifi.Dcpd.Views">
