@@ -1,0 +1,37 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/airable">
+    <interface name="de.tahifi.Airable">
+        <!--
+        Retrieve URL of root directory hosted at Airable.
+        -->
+        <method name="GetRootURL">
+            <arg name="url" type="s" direction="out"/>
+        </method>
+
+        <!--
+        Get URL to be used for authentication with Airable.
+
+        The URL will contain, among others, a signature that was computed from
+        the secret key, a random salt, and other data. It should point to a
+        JSON object that contains the session access token and the server time.
+        These are to be used to generate access passwords.
+        -->
+        <method name="GenerateAuthenticationURL">
+            <arg name="client_ip_address" type="s" direction="in"/>
+            <arg name="client_locale" type="s" direction="in"/>
+            <arg name="url" type="s" direction="out"/>
+        </method>
+
+        <!--
+        Generate password based on given session token and server time.
+
+        The password is computed from the given data and the secret key.
+        -->
+        <method name="GeneratePassword">
+            <arg name="token" type="s" direction="in"/>
+            <arg name="timestamp" type="s" direction="in"/>
+            <arg name="password" type="s" direction="out"/>
+        </method>
+    </interface>
+</node>
