@@ -8,7 +8,10 @@
             <arg name="queued_ids" type="aq" direction="out"/>
             <arg name="removed_ids" type="aq" direction="out"/>
         </method>
-        <method name="Next"/>
+        <method name="Next">
+            <arg name="next_id" type="u" direction="out"/>
+            <arg name="is_playing" type="b" direction="out"/>
+        </method>
         <method name="Push">
             <arg name="stream_id" type="q" direction="in"/>
             <arg name="stream_url" type="s" direction="in"/>
