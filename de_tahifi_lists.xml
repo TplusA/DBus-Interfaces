@@ -12,7 +12,9 @@
         2. the index of the first entry in the list; and
         3. the requested items as an array of tuples containing
           1. the displayable item text (UTF-8); and
-          2. a flag that indicates whether or not the item is a directory.
+          2. a byte that indicates the item kind. Check file
+             de_tahifi_lists_item_kinds.h for possible values and their
+             documentation.
 
         Item ID 0 always denotes the first entry in a list. A maximum number of
         0 indicates that all items in the list should be sent.
@@ -60,7 +62,7 @@
             <arg name="count" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="first_item" type="u" direction="out"/>
-            <arg name="list" type="a(sb)" direction="out"/>
+            <arg name="list" type="a(sy)" direction="out"/>
         </method>
 
         <!--
@@ -120,6 +122,26 @@
         <method name="GetListId">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="child_list_id" type="u" direction="out"/>
+        </method>
+
+        <!--
+        Get list ID for list item that requires a parameter to be meaningful.
+
+        This is interface is intended to be used with search forms.
+
+        \note This interface is not stable. It should not take one parameter,
+              but many. It should not be restricted to strings. There must be a
+              way for clients to query a list of parameters and their types
+              (strings, integers, multiple/single choice from list, etc.).
+              The current situation mandates that we act fast, so this
+              interface remains shitty and incomplete for the time being.
+        -->
+        <method name="GetParameterizedListId">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="item_id" type="u" direction="in"/>
+            <arg name="parameter" type="s" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="child_list_id" type="u" direction="out"/>
         </method>

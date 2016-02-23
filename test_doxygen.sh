@@ -36,6 +36,8 @@ rm *.c
 
 ln -s ../de_tahifi_lists_errors.h
 ln -s ../de_tahifi_lists_errors.hh
+ln -s ../de_tahifi_lists_item_kinds.h
+ln -s ../de_tahifi_lists_item_kinds.hh
 ln -s ../Doxyfile.testall Doxyfile
 
 exec doxygen
