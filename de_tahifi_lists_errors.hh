@@ -57,6 +57,7 @@ class ListError
         "NET_IO",
         "PROTOCOL",
         "AUTHENTICATION",
+        "INCONSISTENT",
     };
 
     static_assert(sizeof(names_) / sizeof(names_[0]) == static_cast<size_t>(ListError::Code::LAST_ERROR_CODE) + 1U,
