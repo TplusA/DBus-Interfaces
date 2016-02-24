@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of T+A Streaming Board D-Bus interfaces (T+A-D-Bus).
  *
@@ -56,8 +56,14 @@ enum DE_TAHIFI_LISTS_ERRORS_ENUM_NAME
     /*! The list is inconsistent and cannot be used. */
     DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(INCONSISTENT),
 
-    /*! Stable name for the highest-value error code. */
-    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(LAST_ERROR_CODE) = DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(INCONSISTENT),
+    /*! Operation not supported. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(NOT_SUPPORTED),
+
+    /*! Operation not allowed. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(PERMISSION_DENIED),
+
+    /*! Stable name for the highest-valued error code. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(LAST_ERROR_CODE) = DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(PERMISSION_DENIED),
 };
 
 #undef DE_TAHIFI_LISTS_ERRORS_ENUM_NAME

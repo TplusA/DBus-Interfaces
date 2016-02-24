@@ -58,6 +58,8 @@ class ListError
         "PROTOCOL",
         "AUTHENTICATION",
         "INCONSISTENT",
+        "NOT_SUPPORTED",
+        "PERMISSION_DENIED",
     };
 
     static_assert(sizeof(names_) / sizeof(names_[0]) == static_cast<size_t>(ListError::Code::LAST_ERROR_CODE) + 1U,
