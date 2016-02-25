@@ -41,8 +41,17 @@ enum DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_NAME
     /*! A directory. */
     DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(DIRECTORY),
 
+    /*! A server (treated as special kind of directory). */
+    DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(SERVER),
+
+    /*! A device (treated as special kind of directory). */
+    DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(STORAGE_DEVICE),
+
     /*! Search form that requires parameters when getting ID. */
     DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(SEARCH_FORM),
+
+    /*! Stable name for the highest-valued item kind ID. */
+    DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(LAST_ITEM_KIND) = DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(SEARCH_FORM),
 };
 
 #undef DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_NAME

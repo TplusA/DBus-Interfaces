@@ -44,15 +44,28 @@ class ListItemKind
         kind_(item_kind)
     {}
 
+    constexpr explicit ListItemKind(uint8_t raw_kind_id) throw():
+        kind_(raw_to_kind(raw_kind_id))
+    {}
+
     constexpr Kind get() const noexcept { return Kind(kind_); }
 
     constexpr uint8_t get_raw_code() const noexcept { return kind_; }
+
+    constexpr static Kind raw_to_kind(uint8_t raw_kind_id) noexcept
+    {
+        return (raw_kind_id <= Kind::LAST_ITEM_KIND)
+            ? Kind(raw_kind_id)
+            : Kind::OPAQUE;
+    }
 
     bool is_directory() const
     {
         switch(kind_)
         {
           case Kind::DIRECTORY:
+          case Kind::SERVER:
+          case Kind::STORAGE_DEVICE:
             return true;
 
           case Kind::OPAQUE:
