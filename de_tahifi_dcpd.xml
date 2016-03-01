@@ -56,6 +56,10 @@
             <arg name="view_name_back" type="s"/>
             <arg name="view_name_forth" type="s"/>
         </signal>
+        <signal name="SearchParameters">
+            <arg name="context" type="s"/>
+            <arg name="query" type="a(ss)"/>
+        </signal>
     </interface>
 
     <interface name="de.tahifi.Dcpd.ListNavigation">
