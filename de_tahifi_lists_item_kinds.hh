@@ -66,11 +66,13 @@ class ListItemKind
           case Kind::DIRECTORY:
           case Kind::SERVER:
           case Kind::STORAGE_DEVICE:
+          case Kind::PLAYLIST_DIRECTORY:
             return true;
 
           case Kind::OPAQUE:
           case Kind::LOCKED:
           case Kind::REGULAR_FILE:
+          case Kind::PLAYLIST_FILE:
           case Kind::SEARCH_FORM:
             break;
         }
