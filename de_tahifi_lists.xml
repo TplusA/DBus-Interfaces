@@ -129,7 +129,7 @@
         <!--
         Get list ID for list item that requires a parameter to be meaningful.
 
-        This is interface is intended to be used with search forms.
+        This interface is intended to be used with search forms.
 
         \note This interface is not stable. It should not take one parameter,
               but many. It should not be restricted to strings. There must be a
