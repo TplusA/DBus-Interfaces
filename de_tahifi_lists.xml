@@ -3,6 +3,40 @@
 <node name="/de/tahifi/lists">
     <interface name="de.tahifi.Lists.Navigation">
         <!--
+        Retrieve a list of contexts known by the list broker.
+
+        List entries always appear in some "context". Each context is
+        associated with a unique, short string identifier that clearly defines
+        the meaning of the context. These string identifiers are compatible
+        with the category identifiers returned by
+        \c de.tahifi.Credentials.Read.GetKnownCategories(). In general, the set
+        of contexts will be a superset of the set of categories.
+
+        Context information is frequently used, so to keep D-Bus messages
+        small, each string identifier is mapped to a short integer that is
+        valid for the lifetime of the list broker instance (each restart of the
+        list broker may yield a new mapping). This integer is encoded into the
+        highest 4 bits of list IDs, so each list is automatically tagged with
+        context information. There can be up to 16 different contexts, which is
+        much more than needed at the time of writing.
+
+        Users of list brokers are free to entirely ignore any context
+        information, but they may also make use of them to treat list items
+        depending on context (user-visible changes, stream queuing behavior,
+        changes in user interface structure, etc.).
+
+        \param out_contexts
+            The current map of contexts. The array maps numeric context IDs to
+            string tuples, where context IDs are equivalent to array indexes.
+            The first string of each tuple is a string ID for the context. The
+            second string is a descriptive string for displaying purposes.
+        \param proxy, cancellable, error GDBus clutter.
+        -->
+        <method name="GetListContexts">
+            <arg name="contexts" type="a(ss)" direction="out"/>
+        </method>
+
+        <!--
         Retrieve range of list items.
 
         Partial lists can be read out over D-Bus using a triple of list ID,
