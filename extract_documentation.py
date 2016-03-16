@@ -141,6 +141,7 @@ dbus_type_to_ctype = {
     "q": "guint16",
     "u": "guint",
     "x": "gint64",
+    "t": "guint64",
     "y": "guchar"
 }
 

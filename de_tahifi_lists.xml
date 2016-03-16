@@ -211,6 +211,32 @@
         </method>
 
         <!--
+        Hint that the referenced lists should be kept around in memory.
+
+        This method marks the lists as recently used and causes them to stay in
+        memory for a longer period of time. They will still be garbage
+        collected, but later than before this method was invoked.
+
+        \param arg_list_ids
+            Lists that whose garbage collection fate shall be deferred.
+        \param out_list_expiry_ms
+            Number of milliseconds the lists will be excluded from garbage
+            collection. This number can be used as a basis for regular keep
+            alive method invokations to keep lists around as long as needed. Do
+            not use this number directly, but substract some time to account
+            for any latencies (using 80% of this value may be appropriate).
+        \param out_invalid_list_ids
+            In case any lists requested to keep alive are not known anymore,
+            their IDs are returned here. Lists may have been removed due to
+            memory pressure before their scheduled life time has expired.
+        -->
+        <method name="KeepAlive">
+            <arg name="list_ids" type="au" direction="in"/>
+            <arg name="list_expiry_ms" type="t" direction="out"/>
+            <arg name="invalid_list_ids" type="au" direction="out"/>
+        </method>>
+
+        <!--
         Indicate that the list with the given list ID cannot be used anymore.
 
         There are two particular reasons why a list cannot be used anymore,
