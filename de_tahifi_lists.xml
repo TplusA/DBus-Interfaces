@@ -229,6 +229,7 @@
             In case any lists requested to keep alive are not known anymore,
             their IDs are returned here. Lists may have been removed due to
             memory pressure before their scheduled life time has expired.
+        \param proxy, cancellable, error GDBus clutter.
         -->
         <method name="KeepAlive">
             <arg name="list_ids" type="au" direction="in"/>
