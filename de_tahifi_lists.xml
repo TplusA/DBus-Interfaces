@@ -83,7 +83,7 @@
             the \p arg_first_item_id parameter for the client's convenience (no
             need to remember the requested first item ID).
         \param out_list
-            The requested range of list items are returned through this
+            The requested range of list items is returned through this
             parameter. In case \p out_error_code is not 0, the returned list is
             empty.
         \param proxy, cancellable, error GDBus clutter.
@@ -97,6 +97,49 @@
             <arg name="error_code" type="y" direction="out"/>
             <arg name="first_item" type="u" direction="out"/>
             <arg name="list" type="a(sy)" direction="out"/>
+        </method>
+
+        <!--
+        Retrieve range of list items, including some meta data.
+
+        This method is the same as \c GetRange, but it also sends back the
+        artist, album, and title information about a stream if available, in
+        this order. In detail, the method returns
+        1. an error code;
+        2. the index of the first entry in the list; and
+        3. the requested items as an array of tuples containing
+          1. the name of the artist (UTF-8), if any;
+          2. the name of the album (UTF-8), if any;
+          3. the name of the title (UTF-8), if any;
+          4. a byte between 0 and 2 that indicates which of the strings is the
+             natural string to display in a simple list; and
+          5. a byte that indicates the item kind. Check file
+             de_tahifi_lists_item_kinds.h for possible values and their
+             documentation.
+
+        Method \c GetRange is preferable over \c GetRangeWithMetaData for two
+        reasons: (1) Meta data is supposed to be extracted from the stream by
+        the stream player; and (2) less data is transferred for \c GetRange,
+        making it faster. Use this method only for sources for which it makes
+        sense to try (e.g., for Airable it would make sense, for USB mass
+        storage it wouldn't).
+
+        \param arg_list_id, arg_first_item_id, arg_count, out_error_code,
+            out_first_item
+            These arguments are the same as for \c GetRange.
+        \param out_list
+            The requested range of list items is returned through this
+            parameter. In case \p out_error_code is not 0, the returned list is
+            empty.
+        \param proxy, cancellable, error GDBus clutter.
+        -->
+        <method name="GetRangeWithMetaData">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="first_item_id" type="u" direction="in"/>
+            <arg name="count" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="first_item" type="u" direction="out"/>
+            <arg name="list" type="a(sssyy)" direction="out"/>
         </method>
 
         <!--
