@@ -57,10 +57,10 @@ enum DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_NAME
     /*! Search form that requires parameters when getting ID. */
     DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(SEARCH_FORM),
 
-    /*! A playlist represented as directory structure. */
+    /*! A playlist stored on file. */
     DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(PLAYLIST_FILE),
 
-    /*! A playlist stored on file. */
+    /*! A playlist represented as directory structure. */
     DE_TAHIFI_LISTS_ITEM_KINDS_ENUM_VALUE(PLAYLIST_DIRECTORY),
 
     /*! Stable name for the highest-valued item kind ID. */
