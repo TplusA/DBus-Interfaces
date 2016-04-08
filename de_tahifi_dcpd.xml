@@ -59,6 +59,7 @@
             <arg name="artist" type="s"/>
             <arg name="album" type="s"/>
             <arg name="title" type="s"/>
+            <arg name="url" type="s"/>
         </signal>
     </interface>
 
