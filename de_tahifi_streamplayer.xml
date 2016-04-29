@@ -34,24 +34,104 @@
             <arg name="position_units" type="s" direction="in"/>
         </method>
 
+        <!--
+        Emitted when a stream has just started playing or continues playing.
+
+        This signal is emitted for both, newly started streams and streams that
+        continue playing from paused state. If necessary, the signal handler
+        can distinguish both cases by comparing the stream ID with the stream
+        ID sent with the preceding \c NowPlaying signal, if any.
+
+        \param arg_id
+            ID of the stream this signal refers to.
+
+        \param arg_url
+            URL of the stream that is now playing.
+
+        \param arg_url_fifo_is_full
+            Whether or not the URL FIFO is full. Clients that push URLs to the
+            FIFO as a reaction to this signal should check this flag before
+            trying to send new URLs to avoid needless D-Bus traffic.
+
+        \param arg_meta_data
+            The meta data known so far as an unsorted array of key/value pairs.
+
+        \param object
+            GDBus clutter.
+        -->
         <signal name="NowPlaying">
             <arg name="id" type="q"/>
             <arg name="url" type="s"/>
             <arg name="url_fifo_is_full" type="b"/>
             <arg name="meta_data" type="a(ss)"/>
         </signal>
-        <signal name="Stopped"/>
-        <signal name="Paused"/>
+
+        <!--
+        Emitted when a stream has just stopped playing (not paused).
+        -->
+        <signal name="Stopped">
+            <arg name="id" type="q"/>
+        </signal>
+
+        <!--
+        Emitted when a stream has just been paused (not stopped).
+        -->
+        <signal name="Paused">
+            <arg name="id" type="q"/>
+        </signal>
+
+        <!--
+        Emitted when new meta data have been extracted from the stream itself.
+
+        This signal always sends all collected meta data, not just a delta.
+        This approach typically does not consume much more D-Bus bandwidth, but
+        significantly reduces complexity of signal handler code.
+
+        \param arg_id
+            ID of the stream this signal refers to.
+
+        \param arg_meta_data
+            The meta data themselves as an unsorted array of key/value pairs.
+
+        \param object
+            GDBus clutter.
+        -->
         <signal name="MetaDataChanged">
+            <arg name="id" type="q"/>
             <arg name="meta_data" type="a(ss)"/>
         </signal>
+
+        <!--
+        Emitted when the temporal position in the stream has changed.
+
+        This signal is usually emitted once per second.
+
+        \param arg_id
+            ID of the stream this signal refers to.
+
+        \param arg_position, arg_position_units
+            Current position and the unit the position is measured in.
+
+        \param arg_duration, arg_duration_units
+            Total length of the stream and the unit the length is measured in.
+            If the total length is unknown, then \p arg_duration is set to -1.
+
+        \param object
+            GDBus clutter.
+        -->
         <signal name="PositionChanged">
+            <arg name="id" type="q"/>
             <arg name="position" type="x" direction="out"/>
             <arg name="position_units" type="s" direction="out"/>
             <arg name="duration" type="x" direction="out"/>
             <arg name="duration_units" type="s" direction="out"/>
         </signal>
+
+        <!--
+        Emitted when the playback speed of the stream has changed.
+        -->
         <signal name="SpeedChanged">
+            <arg name="id" type="q"/>
             <arg name="speed_factor" type="d"/>
         </signal>
     </interface>
