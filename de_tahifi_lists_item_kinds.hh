@@ -74,6 +74,7 @@ class ListItemKind
           case Kind::REGULAR_FILE:
           case Kind::PLAYLIST_FILE:
           case Kind::SEARCH_FORM:
+          case Kind::LOGOUT_LINK:
             break;
         }
 
