@@ -18,7 +18,6 @@
         These are to be used to generate access passwords.
         -->
         <method name="GenerateAuthenticationURL">
-            <arg name="client_ip_address" type="s" direction="in"/>
             <arg name="client_locale" type="s" direction="in"/>
             <arg name="url" type="s" direction="out"/>
         </method>
