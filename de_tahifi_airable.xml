@@ -32,5 +32,72 @@
             <arg name="timestamp" type="s" direction="in"/>
             <arg name="password" type="s" direction="out"/>
         </method>
+
+        <!--
+        Ask list broker to logout from given service using the given URL.
+
+        Note that this function only triggers logging out from the service. The
+        Airable list broker will do this in the background to avoid blocking
+        the caller for a long time if called synchronously. Service login
+        status changes and associated errors are communicated through the
+        \c ExternalServiceLoginStatus signal.
+        -->
+        <method name="ExternalServiceLogout">
+            <arg name="service_id" type="s" direction="in"/>
+            <arg name="url" type="s" direction="in"/>
+        </method>
+
+        <!--
+        Ask list broker to login to given service using stored credentials.
+
+        Note that this function only triggers logging into the service. The
+        Airable list broker will do this in the background to avoid blocking
+        the caller for a long time if called synchronously. Service login
+        status changes and associated errors are communicated through the
+        \c ExternalServiceLoginStatus signal.
+        -->
+        <method name="ExternalServiceLogin">
+            <arg name="service_id" type="s" direction="in"/>
+            <arg name="username" type="s" direction="in"/>
+        </method>
+
+        <!--
+        Inform system about changes of the user's service login status.
+
+        This signal enables keeping the user's login status in sync with the
+        smartphone app. If the user logs out on the smartphone, then the device
+        shall do the same. If the user logs out on the device, then the app
+        shall do the same. If the user logs in on the smartphone or on device,
+        then the device or smartphone is informed about it.
+
+        Note that the primary goal here is to put the user into the focus of
+        action, not the individual devices. If the user logs in or out, then
+        all involved devices should follow, not the other way around.
+
+        \param arg_service_id
+            String ID of the external service such as \c tidal.
+
+        \param arg_log_in
+            True if the user has logged in (or tried to), false if the user has
+            logged out (or tried to).
+
+        \param arg_failed
+            True if an attempt to log in or out has failed.
+
+        \param arg_info
+            Additional information about the log in or log out action. In case
+            of login, this string will be the user name that was used to log
+            into the service. In case of logout, this string will be the URL of
+            the logout button to simplify logout action on the other end.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="ExternalServiceLoginStatus">
+            <arg name="service_id" type="s"/>
+            <arg name="log_in" type="b"/>
+            <arg name="failed" type="b"/>
+            <arg name="info" type="s"/>
+        </signal>
     </interface>
 </node>
