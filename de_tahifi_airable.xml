@@ -36,29 +36,33 @@
         <!--
         Ask list broker to logout from given service using the given URL.
 
-        Note that this function only triggers logging out from the service. The
-        Airable list broker will do this in the background to avoid blocking
-        the caller for a long time if called synchronously. Service login
-        status changes and associated errors are communicated through the
-        \c ExternalServiceLoginStatus signal.
+        Note that this function only triggers logging out from the service, and
+        only if \p is_request is true. The Airable list broker will do this in
+        the background to avoid blocking the caller for a long time if called
+        synchronously. Service login status changes and associated errors are
+        communicated through the \c ExternalServiceLoginStatus signal.
         -->
         <method name="ExternalServiceLogout">
             <arg name="service_id" type="s" direction="in"/>
             <arg name="url" type="s" direction="in"/>
+            <arg name="is_request" type="b" direction="in"/>
+            <arg name="actor_id" type="y" direction="in"/>
         </method>
 
         <!--
         Ask list broker to login to given service using stored credentials.
 
-        Note that this function only triggers logging into the service. The
-        Airable list broker will do this in the background to avoid blocking
-        the caller for a long time if called synchronously. Service login
-        status changes and associated errors are communicated through the
-        \c ExternalServiceLoginStatus signal.
+        Note that this function only triggers logging into the service, and
+        only if \p is_request is true. The Airable list broker will do this in
+        the background to avoid blocking the caller for a long time if called
+        synchronously. Service login status changes and associated errors are
+        communicated through the \c ExternalServiceLoginStatus signal.
         -->
         <method name="ExternalServiceLogin">
             <arg name="service_id" type="s" direction="in"/>
             <arg name="username" type="s" direction="in"/>
+            <arg name="is_request" type="b" direction="in"/>
+            <arg name="actor_id" type="y" direction="in"/>
         </method>
 
         <!--
@@ -76,6 +80,9 @@
 
         \param arg_service_id
             String ID of the external service such as \c tidal.
+
+        \param arg_actor_id
+            ID of the actor that initiated the change of login status.
 
         \param arg_log_in
             True if the user has logged in (or tried to), false if the user has
@@ -95,6 +102,7 @@
         -->
         <signal name="ExternalServiceLoginStatus">
             <arg name="service_id" type="s"/>
+            <arg name="actor_id" type="y"/>
             <arg name="log_in" type="b"/>
             <arg name="failed" type="b"/>
             <arg name="info" type="s"/>
