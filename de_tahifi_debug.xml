@@ -1,0 +1,69 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/dcpd">
+    <interface name="de.tahifi.Debug.Logging">
+        <!--
+        Set or get debug level (or log level) of one running process.
+
+        This method is a direct request to an individual process to change its
+        log level. The log level is changed only for the life time of the
+        process.
+
+        \param arg_new_level
+            A log level such as "quiet" or "trace". Send "default" to set the
+            debug level to the default log level defined by the program. Send
+            empty string to leave the debug level unchanged.
+
+        \param out_old_level
+           The log level the process used before the new log level was
+           activated. In case \p arg_new_level is empty, the current log level
+           is just read out and returned. In case \p arg_new_level is invalid,
+           an empty string is returned and a diagnostics is logged.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="DebugLevel">
+            <arg name="new_level" type="s" direction="in"/>
+            <arg name="old_level" type="s" direction="out"/>
+        </method>
+    </interface>
+
+    <interface name="de.tahifi.Debug.LoggingConfig">
+        <!--
+        Set global debug level.
+
+        This method is implemented by one well-known process in the system that
+        acts as a proxy/repeater for setting the debug level. It distributes
+        changes to the debug level to all other processes by emitting the
+        \c de.tahifi.Debug.LoggingConfig.GlobalDebugLevelChanged signal.
+
+        \param arg_new_level
+            A log level such as "quiet" or "trace". Send "default" to set the
+            debug level to the default log level defined by the program.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="SetGlobalDebugLevel">
+            <arg name="new_level" type="s" direction="in"/>
+        </method>
+
+        <!--
+        Global debug level has changed and should be changed by observing
+        processes as well.
+
+        \param arg_level
+            The new log level. This string will never be empty, but always
+            contain a log level name or the special string "default". Receivers
+            of this signal should take the same actions as they do for their
+            \c de.tahifi.Debug.Logging.DebugLevel implementation.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="GlobalDebugLevelChanged">
+            <arg name="level" type="s"/>
+        </signal>
+    </interface>
+</node>

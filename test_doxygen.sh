@@ -12,6 +12,7 @@ $CODEGEN --generate-c-code=upnp_dleynaserver_dbus --c-namespace tdbus_dleynaserv
 $CODEGEN --generate-c-code=airable_dbus           --c-namespace tdbus              --interface-prefix de.tahifi.              ../de_tahifi_airable.xml
 $CODEGEN --generate-c-code=credentials_dbus       --c-namespace tdbus_credentials  --interface-prefix de.tahifi.Credentials.  ../de_tahifi_credentials.xml
 $CODEGEN --generate-c-code=dcpd_dbus              --c-namespace tdbus_dcpd         --interface-prefix de.tahifi.Dcpd.         ../de_tahifi_dcpd.xml
+$CODEGEN --generate-c-code=debug_dbus             --c-namespace tdbus_debug        --interface-prefix de.tahifi.Debug.        ../de_tahifi_debug.xml
 $CODEGEN --generate-c-code=dbusdl_dbus            --c-namespace tdbus              --interface-prefix de.tahifi.              ../de_tahifi_filetransfer.xml
 $CODEGEN --generate-c-code=lists_dbus             --c-namespace tdbus_lists        --interface-prefix de.tahifi.Lists.        ../de_tahifi_lists.xml
 $CODEGEN --generate-c-code=mounta_dbus            --c-namespace tdbus              --interface-prefix de.tahifi.              ../de_tahifi_mounta.xml
@@ -24,6 +25,7 @@ $DOCEXTRACT -i ../com_intel_dleynaserver.xml -o com_intel_dleynaserver.md -H com
 $DOCEXTRACT -i ../de_tahifi_airable.xml      -o de_tahifi_airable.md      -H de_tahifi_airable.h      -c tdbus              -s de.tahifi.              -n Airable
 $DOCEXTRACT -i ../de_tahifi_credentials.xml  -o de_tahifi_credentials.md  -H de_tahifi_credentials.h  -c tdbus_credentials  -s de.tahifi.Credentials.  -n Credentials
 $DOCEXTRACT -i ../de_tahifi_dcpd.xml         -o de_tahifi_dcpd.md         -H de_tahifi_dcpd.h         -c tdbus_dcpd         -s de.tahifi.Dcpd.         -n DCPD
+$DOCEXTRACT -i ../de_tahifi_debug.xml        -o de_tahifi_debug.md        -H de_tahifi_debug.h        -c tdbus_debug        -s de.tahifi.Debug.        -n Debug
 $DOCEXTRACT -i ../de_tahifi_filetransfer.xml -o de_tahifi_dbusdl.md       -H de_tahifi_dbusdl.h       -c tdbus              -s de.tahifi.              -n DBus-DL
 $DOCEXTRACT -i ../de_tahifi_lists.xml        -o de_tahifi_lists.md        -H de_tahifi_lists.h        -c tdbus_lists        -s de.tahifi.Lists.        -n Lists
 $DOCEXTRACT -i ../de_tahifi_mounta.xml       -o de_tahifi_mounta.md       -H de_tahifi_mounta.h       -c tdbus              -s de.tahifi.              -n MounTA
