@@ -67,6 +67,48 @@
         </signal>
 
         <!--
+        Emitted when a queued stream could not be played.
+
+        The player has stopped when this message is received. The failed stream
+        will have been removed from the queue, but otherwise it will be left
+        untouched. This is because the best strategy to recover from this
+        condition depends on user context. The player cannot really tell all by
+        itself which error recovery strategy would make most sense, so it
+        doesn't even try.
+
+        This signal's parameters are a bit like those of \c NowPlaying, but for
+        case of failure. User interfaces should track both, \c NowPlaying and
+        \c StoppedWithError, to keep their playlist and meta data management up
+        to date. It also should tell the player what to do so that the system
+        can recover from this error.
+
+        \param arg_id
+            ID of the failed stream this signal refers to.
+
+        \param arg_url
+            URL of the stream that failed playing.
+
+        \param arg_url_fifo_is_empty
+            Whether or not the URL FIFO is empty. Clients can use this
+            information to recover from a stopped stream player in a meaningful
+            way (e.g., just try next queued stream, push the next entry from a
+            playlist, or refrain from doing so).
+
+        \param arg_reason
+            String ID of a reason why the stream failed playing. Empty in case
+            the reason could not be determined.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="StoppedWithError">
+            <arg name="id" type="q"/>
+            <arg name="url" type="s"/>
+            <arg name="url_fifo_is_empty" type="b"/>
+            <arg name="reason" type="s"/>
+        </signal>
+
+        <!--
         Emitted when a stream has just stopped playing (not paused).
         -->
         <signal name="Stopped">
