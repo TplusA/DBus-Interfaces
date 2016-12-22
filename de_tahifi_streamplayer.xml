@@ -9,8 +9,9 @@
             <arg name="removed_ids" type="aq" direction="out"/>
         </method>
         <method name="Next">
+            <arg name="skipped_id" type="u" direction="out"/>
             <arg name="next_id" type="u" direction="out"/>
-            <arg name="is_playing" type="b" direction="out"/>
+            <arg name="play_status" type="y" direction="out"/>
         </method>
         <method name="Push">
             <arg name="stream_id" type="q" direction="in"/>
@@ -95,8 +96,8 @@
             playlist, or refrain from doing so).
 
         \param arg_reason
-            String ID of a reason why the stream failed playing. Empty in case
-            the reason could not be determined.
+            String ID of a reason why the stream failed playing. This string
+            must never be empty.
 
         \param object
             GDBus clutter.
