@@ -10,6 +10,25 @@
         </method>
 
         <!--
+        Follow Airable link, return URL the link redirects to.
+
+        \param arg_redirect
+            URL of an Airable redirect.
+        \param out_error_code
+            The D-Bus method returns an error code to the caller. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
+        \param out_url
+            The URL the redirect points to.
+        \param proxy, cancellable, error GDBus clutter.
+        -->
+        <method name="ResolveRedirect">
+            <arg name="redirect" type="s" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="url" type="s" direction="out"/>
+        </method>
+
+        <!--
         Get URL to be used for authentication with Airable.
 
         The URL will contain, among others, a signature that was computed from
