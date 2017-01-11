@@ -274,6 +274,33 @@
             <arg name="uri_list" type="as" direction="out"/>
         </method>
 
+        <!--
+        Get list of ranked links to streams for given item in given list.
+
+        Use this method only for sources for which it makes sense to try (e.g.,
+        for Airable it would make sense, for USB mass storage it wouldn't).
+
+        \param arg_list_id, arg_item_id
+            List item whose associated URIs should be returned.
+        \param out_error_code
+            The D-Bus method returns an error code to the caller. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
+        \param out_link_list
+            An array of triplets containing the rank (higher is better), the
+            bit rate in bits per second, and the URI of the stream link. In
+            case the item is not associated with any URI (e.g., directory
+            entries), an empty array is returned.
+        \param proxy, cancellable, error GDBus clutter.
+
+        \returns True on success, false on error.
+        -->
+        <method name="GetRankedStreamLinks">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="item_id" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="link_list" type="a(uus)" direction="out"/>
+        </method>
 
         <!--
         Hint that the referenced list is not interesting anymore.
