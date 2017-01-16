@@ -142,7 +142,8 @@ dbus_type_to_ctype = {
     "u": "guint",
     "x": "gint64",
     "t": "guint64",
-    "y": "guchar"
+    "y": "guchar",
+    "v": "GVariant *"
 }
 
 dbus_input_type_to_ctype = {
