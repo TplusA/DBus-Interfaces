@@ -1,0 +1,171 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/configuration">
+    <interface name="de.tahifi.Configuration.Proxy">
+        <!--
+        Register configuration owner with a configuration proxy.
+
+        \param arg_id
+            String ID of the configuration owner.
+        \param arg_path
+            Path to owner, must implement the \c de.tahifi.Configuration.Read
+            and \c de.tahifi.Configuration.Write interfaces.
+        \param proxy, cancellable, error GDBus clutter.
+        -->
+        <method name="Register">
+            <arg name="id" type="s" direction="in"/>
+            <arg name="path" type="s" direction="in"/>
+        </method>
+    </interface>
+
+    <interface name="de.tahifi.Configuration.Read">
+        <!--
+        Get list of all configuration keys and their types.
+
+        \param out_id
+            String ID of the configuration owner.
+        \param out_keys
+            A list of keys managed by the application is returned in this
+            parameter. The returned keys are local keys and may be turned into
+            fully qualified keys by prefixing them with the \p out_id in the
+            proper way.
+        \param proxy, cancellable, error GDBus clutter.
+        -->
+        <method name="GetAllKeys">
+            <arg name="id" type="s" direction="out"/>
+            <arg name="keys" type="as" direction="out"/>
+        </method>
+
+        <!--
+        Read out value for a single configuration key.
+
+        The method will fail in case the configuration key is not known.
+
+        \param arg_key
+            Key for which the value should be retrieved. The key may be a local
+            or a fully qualified key.
+        \param out_value
+            The value stored for the given key.
+        \param proxy, cancellable, error GDBus clutter.
+        -->
+        <method name="GetValue">
+            <arg name="key" type="s" direction="in"/>
+            <arg name="value" type="v" direction="out"/>
+        </method>
+
+        <!--
+        Read out complete configuration as a dictionary.
+
+        \param arg_database
+            Restrict database to the given name. The special name "@*" (which
+            is an illegal database name) is used to mean "all".
+        \param out_values
+            All keys and values stored. The returned keys are local keys.
+        -->
+        <method name="GetAllValues">
+            <arg name="database" type="s" direction="in"/>
+            <arg name="values" type="a{sv}" direction="out"/>
+        </method>
+    </interface>
+
+    <interface name="de.tahifi.Configuration.Write">
+        <!--
+        Set value of a single configuration key.
+
+        \param arg_origin
+            String ID of origin of the change so that we can tell who is
+            attempting to change a value. This value is primarily useful for
+            diagnostics purposes, but may also be used to filter configuration
+            change requests.
+        \param arg_key, arg_value
+            Key and value to set.
+        \param proxy, cancellable, error GDBus clutter.
+        -->
+        <method name="SetValue">
+            <arg name="origin" type="s" direction="in"/>
+            <arg name="key" type="s" direction="in"/>
+            <arg name="value" type="v" direction="in"/>
+        </method>
+
+        <!--
+        Set values of a multiple configuration keys.
+
+        Note that, besides performance considerations, it might be required to
+        use this method instead of multiple invocations of
+        \c de.tahifi.Configuration.Write.SetValue to be able to change a set of
+        related settings. This is because it can be impossible to change
+        multiple settings one by one without temporarily introducing
+        contradictory combinations.
+
+        Also note that while this method attempts to guaraentee consistency, it
+        does not guaraentee atomicity. Individual configuration change requests
+        may fail while others succeed, but those that succeed should result in
+        a consistent state.
+
+        \param arg_origin
+            String ID of origin of the changes so that we can tell who is
+            attempting to change the values.
+        \param arg_values
+            Dictionary of key/value pairs to set.
+        \param out_error_codes
+            For each key for which the configuration change that has failed, an
+            error code is returned in this dictionary. In case there were no
+            errors, the returned dictionary will be empty.
+        \param proxy, cancellable, error GDBus clutter.
+        -->
+        <method name="SetMultipleValues">
+            <arg name="origin" type="s" direction="in"/>
+            <arg name="values" type="a{sv}" direction="in"/>
+            <arg name="error_codes" type="a{ss}" direction="out"/>
+        </method>
+    </interface>
+
+    <interface name="de.tahifi.Configuration.Monitor">
+        <!--
+        Inform listeners about configuration changes.
+
+        The set of changes is passed as a dictionary of key/value pairs along
+        with the ID of the origin of the change.
+
+        Key are structured strings. They consist of up to four parts, separated
+        by colons: owner, database, section, and name, in that order.
+
+        The owner is the ID passed in \c de.tahifi.Configuration.Proxy.Register
+        when the owner registered its key set. In keys, the owner ID is always
+        prefixed with a '@' character. If this field is present, then the key
+        is called a fully qualified key; otherwise, the key is called a local
+        key. The owner field may ofted be omitted if it is known from context.
+        Within an application, for instance, its own keys may always be local
+        keys.
+
+        The database field contains a string that does not begin with '@'. It
+        is meaningful only to the application that manages the key and is used
+        to separate keys into multiple configuration files. Therefore, if there
+        is only a single configuration file or the configuration keys are
+        unique across configuration files, the database field may remain empty.
+        It must, however, not be omitted.
+
+        The section field contains a string that does not begin with '@'. This
+        field is optional and is used to tell which section the key belongs to
+        in case the same basic key name may occur in multiple sections,
+        possibly at the same time. In case the section name is not needed, the
+        field can be completely omitted.
+
+        The name field contains the actual key name as it appears in the final
+        configuration file. It must not begin with '@'.
+
+        \param arg_origin
+            String ID of origin that triggered the changes. This will be the
+            same string as passed to \c de.tahifi.Configuration.Write.SetValue
+            or \c de.tahifi.Configuration.Write.SetMultipleValues methods.
+        \param arg_values
+            Dictionary of key/value pairs that have changed.
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="Updated">
+            <arg name="origin" type="s"/>
+            <arg name="values" type="a{sv}"/>
+        </signal>
+    </interface>
+</node>
