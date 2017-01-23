@@ -1,0 +1,177 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/airable">
+    <interface name="de.tahifi.ArtCache.Write">
+        <!--
+        Store image data for given key; image data shall be downloaded from
+        given URI.
+
+        \param arg_stream_key
+            Key for the image associated with a single stream. This is usually
+            a hash of the path to the stream the image belongs to. It is an
+            error to pass an empty key.
+        \param arg_priority
+            Image priority in case there are multiple images for the same
+            stream. For each key, there can be one image per priority. The
+            image with the highest priority "wins".
+            Priorities:
+            -  0 = Invalid value, do not pass to this method.
+            - 10 = Generic image based on source (e.g., a USB symbol, DLNA
+                   logo, etc.).
+            - 20 = Specific service image read from the service, such as the
+                   provided UPnP server icon or streaming service logo.
+            - 30 = Image for a directory provided by a trusted directory
+                   service such as UPnP or Airable. This is frequently one
+                   image that is used for a whole album.
+            - 40 = Image for a specific stream provided by a trusted directory
+                   service. This is frequently used in playlists where the
+                   cover art is different for each stream.
+            - 50 = Image data read from stream meta data. This is the image
+                   stored inside the stream itself.
+        \param arg_image_uri
+            URI of the image. The image will be downloaded in the background.
+            After it has been downloaded (or on failure), a corresponding
+            signal will be emitted on the monitoring interface.
+        \param proxy, cancellable, error  GDBus clutter.
+        -->
+        <method name="AddImageByURI">
+            <arg name="stream_key" type="ay" direction="in">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="priority" type="y" direction="in"/>
+            <arg name="image_uri" type="s" direction="in"/>
+        </method>
+
+        <!--
+        Store image data for given key; image data are embedded.
+
+        \param arg_stream_key, arg_priority
+            See \c de.tahifi.ArtCache.Write.AddImageByURI().
+        \param arg_image_data
+            Raw image data in any format. Since conversion may take some time
+            or may be deferred for some reason, this method will return
+            immediately. A signal will be emitted on the monitoring interface
+            when the conversion is done or has failed.
+        \param proxy, cancellable, error  GDBus clutter.
+        -->
+        <method name="AddImageByData">
+            <arg name="stream_key" type="ay" direction="in">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="priority" type="y" direction="in"/>
+            <arg name="image_data" type="ay" direction="in">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+        </method>
+    </interface>
+
+    <interface name="de.tahifi.ArtCache.Read">
+        <!--
+        Retrieve image of highest priority for given key.
+
+        \param arg_stream_key
+            Stream key of the image data to be retrieved. It is an error to
+            pass an empty key.
+        \param arg_hash
+            Hash of the stream data as known by the caller. Empty for first or
+            forced retrieval.
+        \param out_error_code
+            In case no image data could be retrieved, the reason for failure is
+            encoded in this error code.
+            Error codes:
+            - 0 = OK. Image data and hash are new and should be used by the
+                  caller to update whatever it has to update.
+            - 1 = Unchanged. Image data still match the given \p arg_hash.
+            - 2 = Key unknown.
+            - 3 = Busy.
+        \param out_image_priority
+            Priority of the returned image data.
+        \param out_image_hash
+            Hash of the retrieved image data. Empty in case of equal hash or
+            any error.
+        \param out_image_data
+            Raw image data in a fixed format. Empty in case of equal hash or
+            any error.
+        \param proxy, cancellable, error  GDBus clutter.
+        -->
+        <method name="GetScaledImageData">
+            <arg name="stream_key" type="ay" direction="in">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="hash" type="ay" direction="in">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="image_priority" type="y" direction="out"/>
+            <arg name="image_hash" type="ay" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="image_data" type="ay" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+        </method>
+    </interface>
+
+    <interface name="de.tahifi.ArtCache.Monitor">
+        <!--
+        A new stream key has been added to the cache, but converted image data
+        is not available yet.
+        -->
+        <signal name="Associated">
+            <arg name="stream_key" type="ay">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="priority" type="y"/>
+        </signal>
+
+        <!--
+        All images for the given key have been removed from the cache.
+        -->
+        <signal name="Removed">
+            <arg name="stream_key" type="ay">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+        </signal>
+
+        <!--
+        Image data are available for a stream key.
+
+        This signal is the counterpart of \c de.tahifi.ArtCache.Monitor.Failed
+        in case of failure.
+        -->
+        <signal name="Added">
+            <arg name="stream_key" type="ay">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="priority" type="y"/>
+            <arg name="is_updated" type="b"/>
+        </signal>
+
+        <!--
+        Image processing for given key/priority pair has failed.
+
+        This signal is the counterpart of \c de.tahifi.ArtCache.Monitor.Added
+        in case of failure.
+
+        \param arg_stream_key, arg_priority
+            Stream key and priority of the image data that were supposed to be
+            added to the cache.
+        \param arg_error_code
+            What went wrong.
+            - 1 = Download error.
+            - 2 = Input format not supported.
+            - 3 = Out of memory.
+            - 4 = No space left on device.
+            - 5 = I/O failure.
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="Failed">
+            <arg name="stream_key" type="ay">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="priority" type="y"/>
+            <arg name="error_code" type="y"/>
+        </signal>
+    </interface>
+</node>
