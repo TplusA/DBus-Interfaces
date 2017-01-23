@@ -16,6 +16,9 @@
         <method name="Push">
             <arg name="stream_id" type="q" direction="in"/>
             <arg name="stream_url" type="s" direction="in"/>
+            <arg name="stream_key" type="ay" direction="in">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
             <arg name="start_position" type="x" direction="in"/>
             <arg name="start_units" type="s" direction="in"/>
             <arg name="stop_position" type="x" direction="in"/>
@@ -44,7 +47,14 @@
         ID sent with the preceding \c NowPlaying signal, if any.
 
         \param arg_id
-            ID of the stream this signal refers to.
+            ID of the stream this signal refers to. The stream ID is a
+            temporary identifier that refers to the action of playing a stream.
+            Playing the same stream twice in a row results in two different
+            stream IDs being emitted.
+
+        \param arg_stream_key
+            Stream key of the playing stream. This is supposed to be a stable
+            identifier that refers to the stream as a source.
 
         \param arg_url
             URL of the stream that is now playing.
@@ -62,6 +72,9 @@
         -->
         <signal name="NowPlaying">
             <arg name="id" type="q"/>
+            <arg name="stream_key" type="ay">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
             <arg name="url" type="s"/>
             <arg name="url_fifo_is_full" type="b"/>
             <arg name="meta_data" type="a(ss)"/>

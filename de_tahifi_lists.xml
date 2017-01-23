@@ -263,6 +263,8 @@
             An array of strings containing the URI the item refers to. In case
             the item is not associated with any URI (e.g., directory entries),
             an empty string is returned.
+        \param out_image_stream_key
+            Stream key for retrieval of cover art.
         \param proxy, cancellable, error GDBus clutter.
 
         \returns True on success, false on error.
@@ -272,6 +274,9 @@
             <arg name="item_id" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="uri_list" type="as" direction="out"/>
+            <arg name="image_stream_key" type="ay" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
         </method>
 
         <!--
@@ -291,6 +296,8 @@
             bit rate in bits per second, and the URI of the stream link. In
             case the item is not associated with any URI (e.g., directory
             entries), an empty array is returned.
+        \param out_image_stream_key
+            Stream key for retrieval of cover art.
         \param proxy, cancellable, error GDBus clutter.
 
         \returns True on success, false on error.
@@ -300,6 +307,9 @@
             <arg name="item_id" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="link_list" type="a(uus)" direction="out"/>
+            <arg name="image_stream_key" type="ay" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
         </method>
 
         <!--
