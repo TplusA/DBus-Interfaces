@@ -61,6 +61,7 @@
             is an illegal database name) is used to mean "all".
         \param out_values
             All keys and values stored. The returned keys are local keys.
+        \param proxy, cancellable, error GDBus clutter.
         -->
         <method name="GetAllValues">
             <arg name="database" type="s" direction="in"/>
