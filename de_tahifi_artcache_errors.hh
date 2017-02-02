@@ -57,6 +57,7 @@ class ReadError
         "UNCACHED",
         "KEY_UNKNOWN",
         "BUSY",
+        "FORMAT_NOT_SUPPORTED",
         "IO_FAILURE",
         "INTERNAL",
     };

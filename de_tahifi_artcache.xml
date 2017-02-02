@@ -72,6 +72,8 @@
         \param arg_stream_key
             Stream key of the image data to be retrieved. It is an error to
             pass an empty key.
+        \param arg_format
+            Image format specification.
         \param arg_hash
             Hash of the image data as known by the caller. Empty for first or
             forced retrieval.
@@ -98,6 +100,7 @@
             <arg name="stream_key" type="ay" direction="in">
                 <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
             </arg>
+            <arg name="format" type="s" direction="in"/>
             <arg name="hash" type="ay" direction="in">
                 <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
             </arg>
