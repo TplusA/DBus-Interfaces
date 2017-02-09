@@ -25,9 +25,6 @@ namespace ArtCache
 class ReadError
 {
   public:
-    ReadError(const ReadError &) = delete;
-    ReadError &operator=(const ReadError &) = delete;
-
 #ifndef DE_TAHIFI_ARTCACHE_READ_ERRORS_ENUM_NAME
 #define DE_TAHIFI_ARTCACHE_READ_ERRORS_ENUM_NAME        Code
 #endif /* !DE_TAHIFI_ARTCACHE_READ_ERRORS_ENUM_NAME */
@@ -132,9 +129,6 @@ class ReadError
 class MonitorError
 {
   public:
-    MonitorError(const MonitorError &) = delete;
-    MonitorError &operator=(const MonitorError &) = delete;
-
 #ifndef DE_TAHIFI_ARTCACHE_MONITOR_ERRORS_ENUM_NAME
 #define DE_TAHIFI_ARTCACHE_MONITOR_ERRORS_ENUM_NAME        Code
 #endif /* !DE_TAHIFI_ARTCACHE_MONITOR_ERRORS_ENUM_NAME */
