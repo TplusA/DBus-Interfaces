@@ -1,0 +1,208 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/sources">
+    <interface name="de.tahifi.AudioPath.Manager">
+        <!--
+        Register an audio player.
+
+        \param arg_player_id
+            Unique ID of the audio player.
+
+        \param arg_player_name
+            Descriptive name of the audio player.
+
+        \param arg_path
+            D-Bus object path to the player's \c de.tahifi.AudioPath.Player
+            implementation.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="RegisterPlayer">
+            <arg name="player_id" type="s" direction="in"/>
+            <arg name="player_name" type="s" direction="in"/>
+            <arg name="path" type="o" direction="in"/>
+        </method>
+
+        <!--
+        Register an audio source.
+
+        \param arg_source_id
+            Unique ID of the audio source.
+
+        \param arg_source_name
+            Descriptive name of the audio source.
+
+        \param arg_player_id
+            ID of the player responsible for this source. Note that it is
+            possible to register sources before the corresponding player has
+            registered. This allows for lose coupling and faster system
+            startup, but requesting the source will fail as long as the player
+            hasn't registered yet.
+
+        \param arg_path
+            D-Bus object path to the source's \c de.tahifi.AudioPath.Source
+            implementation.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="RegisterSource">
+            <arg name="source_id" type="s" direction="in"/>
+            <arg name="source_name" type="s" direction="in"/>
+            <arg name="player_id" type="s" direction="in"/>
+            <arg name="path" type="o" direction="in"/>
+        </method>
+
+        <!--
+        Request to activate the player responsible for the given source.
+
+        This method should not be called synchronously because the callee needs
+        to take some actions to actually switch sources and players. In case
+        the caller is also the registered source, then it may ignore the
+        (asynchronously delivered) return values and just rely on its
+        implementation of the \c de.tahifi.AudioPath.Source interface.
+
+        A source cannot be requested in case the corresponding player hasn't
+        registered yet. In this case, the D-Bus call will fail. The caller may
+        want to wait for the \c de.tahifi.AudioPath.Manager.PlayerRegistered
+        signal before requesting a source.
+
+        \param arg_source_id
+            Non-empty ID of the source that wants to play.
+
+        \param out_player_id
+            ID of the player that was activated.
+
+        \param out_switched
+            True in case the player has been switched to, false in case the
+            player was active already.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="RequestSource">
+            <arg name="source_id" type="s" direction="in"/>
+            <arg name="player_id" type="s" direction="out"/>
+            <arg name="switched" type="b" direction="out"/>
+        </method>
+
+        <!--
+        Request to shut down the current audio path.
+
+        This method requests to disassociate the currently selected source from
+        its player.
+
+        The player may remain active. In this case, the player may continue
+        playing if not taken care of otherwise. It is the application's
+        responsibility to stop the player in this case if and when required.
+
+        \param arg_deactivate_player
+            True in case any active player should be deactivated (even in case
+            no source is selected), false otherwise.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="ReleasePath">
+            <arg name="deactivate_player" type="b" direction="in"/>
+        </method>
+
+        <!--
+        Check which player is currently active.
+
+        \param arg_source_id
+            Optional source ID for checking if the currently active player is
+            correct for the given source. Pass empty string to just find out
+            the player, regardless of source.
+
+        \param out_player_id
+            Name of the currently active player, empty if none. In case the
+            source ID is non-empty and the currently active player is not
+            responsible for the given source ID, then the returned player ID
+            will be empty (which does \e not mean that no player is active).
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="GetActivePlayer">
+            <arg name="source_id" type="s" direction="in"/>
+            <arg name="player_id" type="s" direction="out"/>
+        </method>
+
+        <!--
+        Signal emitted after a player has registered.
+        -->
+        <signal name="PlayerRegistered">
+            <arg name="player_id" type="s"/>
+            <arg name="player_name" type="s"/>
+        </signal>
+
+        <!--
+        Signal emitted after an audio path has been activated.
+
+        \param arg_source_id
+            ID of the selected source, empty in case no source is selected
+            anymore. There might still be an active player in the latter case.
+
+        \param arg_player_id
+            ID the the active player, empty in case no player is active. An
+            empty player ID implies an empty source ID (but not the other way
+            around).
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="PathActivated">
+            <arg name="source_id" type="s"/>
+            <arg name="player_id" type="s"/>
+        </signal>
+    </interface>
+
+    <interface name="de.tahifi.AudioPath.Source">
+        <!--
+        Called when the source has been selected.
+
+        The corresponding player will be active by the time this method is
+        called. In case there is only a single source managed by the
+        implementation of this interface, the \p arg_source_id parameter may be
+        safely ignored.
+        -->
+        <method name="Selected">
+            <arg name="source_id" type="s" direction="in"/>
+        </method>
+
+        <!--
+        Called when the source has been deselected.
+
+        The active player may have switched by the time this method is called.
+        In case there is only a single source managed by the implementation of
+        this interface, the \p arg_source_id parameter may be safely ignored.
+        -->
+        <method name="Deselected">
+            <arg name="source_id" type="s" direction="in"/>
+        </method>
+    </interface>
+
+    <interface name="de.tahifi.AudioPath.Player">
+        <!--
+        Called when the player is pronounced the active one.
+
+        As long as the player is active, it is allowed to bind exclusively to
+        the audio device.
+        -->
+        <method name="Activate"/>
+
+        <!--
+        Called to deactivate the player.
+
+        The player must stop audio playback and release the audio device when
+        this method is invoked. The audio device must have been released by the
+        time this method returns.
+
+        The player must not claim the audio device while not active and it must
+        reject any play or queue requests while in non-active state.
+        -->
+        <method name="Deactivate"/>
+    </interface>
+</node>
