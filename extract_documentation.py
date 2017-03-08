@@ -147,6 +147,7 @@ dbus_type_to_ctype = {
 }
 
 dbus_input_type_to_ctype = {
+    "o": "const gchar *",
     "s": "const gchar *",
 }
 
