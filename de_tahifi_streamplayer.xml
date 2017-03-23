@@ -60,6 +60,30 @@
         </method>
 
         <!--
+        Jump to next track.
+
+        Note that this is \e not a queue/URL FIFO command. Rather, this is a
+        command directed at players that maintain their own playlists. Those
+        that rely on external playlists should ignore this command.
+
+        \see
+            \c de.tahifi.Streamplayer.Playback.SkipToPrevious
+        -->
+        <method name="SkipToNext"/>
+
+        <!--
+        Jump to previous track.
+
+        Note that this is \e not a queue/URL FIFO command. Rather, this is a
+        command directed at players that maintain their own playlists. Those
+        that rely on external playlists should ignore this command.
+
+        \see
+            \c de.tahifi.Streamplayer.Playback.SkipToNext
+        -->
+        <method name="SkipToPrevious"/>
+
+        <!--
         Fast forward or fast rewind.
 
         \param arg_speed_factor
