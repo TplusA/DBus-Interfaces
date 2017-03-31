@@ -60,6 +60,23 @@
         </method>
 
         <!--
+        Fast forward or fast rewind.
+
+        \param arg_speed_factor
+            Pass positive values for faster/slower playback in forward
+            direction. Pass negative values for faster/slower playback in
+            reverse direction. Pass zero to stop fast winding and revert to
+            regular play or pause state. Value 1.0 is interpreted as zero and
+            thus stops fast winding as well.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="SetSpeed">
+            <arg name="speed_factor" type="d" direction="in"/>
+        </method>
+
+        <!--
         Emitted when a stream has just started playing or continues playing.
 
         This signal is emitted for both, newly started streams and streams that
