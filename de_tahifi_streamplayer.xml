@@ -33,6 +33,27 @@
         <method name="Start"/>
         <method name="Stop"/>
         <method name="Pause"/>
+
+        <!--
+        Set absolute stream position.
+
+        Seeking will stop fast forward/rewind mode and revert the stream to
+        regular playback/pause mode.
+
+        \param arg_position
+            The position as raw value, relative to the beginning of the
+            currently playing stream.
+
+        \param arg_position_units
+            The units \p arg_position is given in. Supported units are "s" for
+            seconds, "ms" for milliseconds, "us" for microseconds, "ns" for
+            nanoseconds, and "%" for percentage between start and end of stream
+            (in this case, \p arg_position is a value between 0 and 1000000 to
+            encode 0.0000 through 100.0000 percent).
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
         <method name="Seek">
             <arg name="position" type="x" direction="in"/>
             <arg name="position_units" type="s" direction="in"/>
