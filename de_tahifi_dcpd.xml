@@ -11,11 +11,13 @@
         <signal name="Next"/>
         <signal name="Previous"/>
 
-        <signal name="FastForward"/>
-        <signal name="FastRewind"/>
-        <signal name="FastWindStop"/>
-        <signal name="FastWindSetFactor">
-            <arg name="speed" type="d"/>
+        <signal name="Seek">
+            <arg name="position" type="x" direction="in"/>
+            <arg name="position_units" type="s" direction="in"/>
+        </signal>
+
+        <signal name="SetSpeed">
+            <arg name="speed_factor" type="d"/>
         </signal>
 
         <signal name="RepeatModeToggle"/>
