@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2017  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of T+A Streaming Board D-Bus interfaces (T+A-D-Bus).
  *
@@ -62,8 +62,29 @@ enum DE_TAHIFI_LISTS_ERRORS_ENUM_NAME
     /*! Operation not allowed. */
     DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(PERMISSION_DENIED),
 
+    /*! The URI passed into the D-Bus method was invalid. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(INVALID_URI),
+
+    /*! System is busy, try again later after waiting for at least 500 ms. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY_500),
+
+    /*! System is busy, try again later after waiting for at least 1000 ms. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY_1000),
+
+    /*! System is busy, try again later after waiting for at least 1500 ms. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY_1500),
+
+    /*! System is busy, try again later after waiting for at least 3000 ms. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY_3000),
+
+    /*! System is busy, try again later after waiting for at least 5000 ms. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY_5000),
+
+    /*! System is busy, try again later at any point. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY),
+
     /*! Stable name for the highest-valued error code. */
-    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(LAST_ERROR_CODE) = DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(PERMISSION_DENIED),
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(LAST_ERROR_CODE) = DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY),
 };
 
 #undef DE_TAHIFI_LISTS_ERRORS_ENUM_NAME

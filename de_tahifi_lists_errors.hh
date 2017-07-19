@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2017  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of T+A Streaming Board D-Bus interfaces (T+A-D-Bus).
  *
@@ -60,6 +60,13 @@ class ListError
         "INCONSISTENT",
         "NOT_SUPPORTED",
         "PERMISSION_DENIED",
+        "INVALID_URI",
+        "BUSY_500",
+        "BUSY_1000",
+        "BUSY_1500",
+        "BUSY_3000",
+        "BUSY_5000",
+        "BUSY",
     };
 
     static_assert(sizeof(names_) / sizeof(names_[0]) == static_cast<size_t>(ListError::Code::LAST_ERROR_CODE) + 1U,
