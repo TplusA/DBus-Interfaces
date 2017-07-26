@@ -192,6 +192,11 @@
             The D-Bus method returns either the requested list ID, or 0 in case
             of an error (e.g., the specified list item does not exist or is not
             a directory).
+        \param out_list_title
+            Name of the list (UTF-8).
+        \param out_list_title_translatable
+            True if the string in \p out_list_title is subject to i18n within
+            the UI, false if the string shall be displayed as is.
         \param proxy, cancellable, error GDBus clutter.
 
         \returns True on success, false on error.
@@ -201,6 +206,8 @@
             <arg name="item_id" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="child_list_id" type="u" direction="out"/>
+            <arg name="list_title" type="s" direction="out"/>
+            <arg name="list_title_translatable" type="b" direction="out"/>
         </method>
 
         <!--
@@ -221,6 +228,8 @@
             <arg name="parameter" type="s" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="child_list_id" type="u" direction="out"/>
+            <arg name="list_title" type="s" direction="out"/>
+            <arg name="list_title_translatable" type="b" direction="out"/>
         </method>
 
         <!--
@@ -240,6 +249,11 @@
             \p arg_list_id refers to the root directory, an
             \p out_parent_item_id of 1 is returned to allow distinction between
             erroneous requests and requests from the root directory.
+        \param out_list_title
+            Name of the list (UTF-8).
+        \param out_list_title_translatable
+            True if the string in \p out_list_title is subject to i18n within
+            the UI, false if the string shall be displayed as is.
         \param proxy, cancellable, error GDBus clutter.
 
         \returns True on success, false on error.
@@ -248,6 +262,8 @@
             <arg name="list_id" type="u" direction="in"/>
             <arg name="parent_list_id" type="u" direction="out"/>
             <arg name="parent_item_id" type="u" direction="out"/>
+            <arg name="list_title" type="s" direction="out"/>
+            <arg name="list_title_translatable" type="b" direction="out"/>
         </method>
 
         <!--
