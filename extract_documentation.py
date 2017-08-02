@@ -152,6 +152,7 @@ dbus_input_type_to_ctype = {
 }
 
 dbus_output_type_to_ctype = {
+    "o": "gchar *",
     "s": "gchar *",
     "as": "gchar **",
 }

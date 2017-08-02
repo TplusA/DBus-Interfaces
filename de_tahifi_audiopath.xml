@@ -131,11 +131,72 @@
         </method>
 
         <!--
+        Retrieve all registered audio paths.
+
+        This method returns quickly, so it is usually safe to call
+        synchronously.
+
+        \param out_usable
+            Array of tuples of source ID and player ID. This array contains all
+            audio paths that are readily usable.
+        \param out_incomplete
+            Like \p out_usable, but the audio paths returned in this parameter
+            are still incomplete and therefore not usable. Note that the source
+            ID may be empty, indicating players for which no source has been
+            registered yet.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="GetPaths">
+            <arg name="usable" type="a(ss)" direction="out"/>
+            <arg name="incomplete" type="a(ss)" direction="out"/>
+        </method>
+
+        <!--
+        Retrieve information about a registered player.
+
+        This method returns quickly, so it is usually safe to call
+        synchronously.
+        -->
+        <method name="GetPlayerInfo">
+            <arg name="player_id" type="s" direction="in"/>
+            <arg name="player_name" type="s" direction="out"/>
+            <arg name="dbusname" type="s" direction="out"/>
+            <arg name="dbuspath" type="o" direction="out"/>
+        </method>
+
+        <!--
+        Retrieve information about a registered audio source.
+
+        This method returns quickly, so it is usually safe to call
+        synchronously.
+        -->
+        <method name="GetSourceInfo">
+            <arg name="source_id" type="s" direction="in"/>
+            <arg name="source_name" type="s" direction="out"/>
+            <arg name="player_id" type="s" direction="out"/>
+            <arg name="dbusname" type="s" direction="out"/>
+            <arg name="dbuspath" type="o" direction="out"/>
+        </method>
+
+        <!--
         Signal emitted after a player has registered.
         -->
         <signal name="PlayerRegistered">
             <arg name="player_id" type="s"/>
             <arg name="player_name" type="s"/>
+        </signal>
+
+        <!--
+        Signal emitted when a new, usable audio path is available.
+
+        An audio path is usable if both, an audio source and its associated
+        player, have registered with the audio path manager.
+        -->
+        <signal name="PathAvailable">
+            <arg name="source_id" type="s"/>
+            <arg name="player_id" type="s"/>
         </signal>
 
         <!--
