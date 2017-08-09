@@ -267,6 +267,38 @@
         </method>
 
         <!--
+        Get parent list ID and item that links to the given context.
+
+        The list linked to corresponds to the root list for the requested
+        context. There are two reasons why this function returns a link instead
+        of a direct list ID: (1) permissions and related error handling, and
+        (2) performance.
+
+        If we would return a direct list ID, then this method would work more
+        like \c de.tahifi.Lists.Navigation.GetListId(). This, however, would
+        imply performing the same operations as that function performs.
+        Specifically, it would mean this method would actually have to open the
+        list, implying a quite notable performance hit. Also, in case the
+        context requires some kind of login, the login procedure may fail and
+        the follow-up error handling in client code would be more complicated
+        than necessary (it would duplicate the handling required for
+        \c GetListId()).
+
+        For these reasons, this method (and its output) is more like
+        \c de.tahifi.Lists.Navigation.GetParentLink(). A robust implementation
+        of calls of \c GetListId() in client code can be reused and will be
+        able to make a much better job at error handling, plus the performance
+        hit is only taken when necessary.
+        -->
+        <method name="GetRootLinkToContext">
+            <arg name="context" type="s" direction="in"/>
+            <arg name="parent_list_id" type="u" direction="out"/>
+            <arg name="parent_item_id" type="u" direction="out"/>
+            <arg name="list_title" type="s" direction="out"/>
+            <arg name="list_title_translatable" type="b" direction="out"/>
+        </method>
+
+        <!--
         Get list of URIs for given item in given list.
 
         \param arg_list_id, arg_item_id
