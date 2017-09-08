@@ -207,7 +207,7 @@
             anymore. There might still be an active player in the latter case.
 
         \param arg_player_id
-            ID the the active player, empty in case no player is active. An
+            ID of the active player, empty in case no player is active. An
             empty player ID implies an empty source ID (but not the other way
             around).
 
