@@ -400,6 +400,75 @@
         </method>>
 
         <!--
+        Temporarily force caching of lists, even those which must never be
+        cached.
+
+        This is useful for players that wish to traverse through the list
+        hierarchy to generate a playlist on the fly. Normally, whenever a list
+        further up the hierarchy is accessed, the hierarchy that is currently
+        traversed gets purged, so a player would have a very hard time to
+        re-sync with the replaced hierarchy.
+
+        To avoid these complexities, whole subtrees can be forced to stay in
+        cache. It is enough to call this method for the root of some subtree,
+        even if this root is cacheable. Any non-cacheable lists encountered
+        deeper below that root are automatically kept in cache. When the caller
+        is done with the subtree, it should call this method again with the
+        \p arg_force parameter set to \c false to revert the subtree lists to
+        their default behavior.
+
+        This method may be called multiple times for different list IDs, each
+        of which individually overriding caching behavior of the corresponding
+        subtrees. This is also true for an ID in a subtree whose default
+        caching behavior has been modified already. In this case, if the upper
+        list is reverted to default behavior, then the list deeper down the
+        subtree may still override caching; if the list deeper down is reverted
+        to default, the upper list may keep that list in overridden state.
+
+        Even though it is possible to pass the list broker's root list in
+        \p arg_list_id to keep everything in cache, this should be avoided. It
+        is better to restrict enforced caching to only those subtrees needed by
+        the caller (say, a player), allowing to keep the rest of the list
+        hierarchy working in the expected way (say, for list browsing while
+        playing).
+
+        The effect of this method lasts until a timeout expires. The expiry
+        time is returned in the \p out_list_expiry_ms parameter. To keep the
+        subtree in cache, this method must be called again before the timeout
+        expires (similar to the \c de.tahifi.Lists.Navigation.KeepAlive
+        method). Note that this method is independent of and completely
+        orthogonal to the \c de.tahifi.Lists.Navigation.KeepAlive method. That
+        is, even if a subtree is forced to stay in cache, it is still subject
+        to garbage collection. Regular keep-alive calls are necessary in
+        addition to regular force-in-cache calls to avoid this.
+
+        \param arg_list_id
+            Root of the subtree which should be cached.
+
+        \param arg_force
+            Pass \c true to force given subtree to stay in cache.
+            Pass \c false to revert the default caching mode defined for the
+            list. Note that passing \c false will not force a cached list to
+            become a non-cacheable one. Either the list is reverted to
+            non-cacheable mode if this is its default mode, or it remains a
+            cacheable list if this is its default.
+
+        \param out_list_expiry_ms
+            Timeout after which the caching mode of the subtree nodes is
+            reverted to their defaults. This timeout is used as a safety
+            measure against race conditions or bugs in callers, both of which
+            may cause removal of the enforced caching.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="ForceInCache">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="force" type="b" direction="in"/>
+            <arg name="list_expiry_ms" type="t" direction="out"/>
+        </method>>
+
+        <!--
         Indicate that the list with the given list ID cannot be used anymore.
 
         There are two particular reasons why a list cannot be used anymore,
