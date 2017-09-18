@@ -56,9 +56,9 @@
         List IDs are opaque non-zero identifiers managed internally by list
         brokers. No application shall make any assumptions about these IDs,
         except maybe that they are probably completely random numbers and that
-        ID 0 is invalid. Only IDs retured by \c GetListId can be used safely to
+        ID 0 is invalid. Only IDs returned by \c GetListId can be used safely to
         invoke this method. In case an invalid list ID is used in an
-        invokation, the returned error code will be set accordingly.
+        invocation, the returned error code will be set accordingly.
 
         The method may take a rather long time to generate an answer in case
         the list contents have to be fetched over a network. If such a blocking
@@ -384,8 +384,8 @@
         \param out_list_expiry_ms
             Number of milliseconds the lists will be excluded from garbage
             collection. This number can be used as a basis for regular keep
-            alive method invokations to keep lists around as long as needed. Do
-            not use this number directly, but substract some time to account
+            alive method invocations to keep lists around as long as needed. Do
+            not use this number directly, but subtract some time to account
             for any latencies (using 80% of this value may be appropriate).
         \param out_invalid_list_ids
             In case any lists requested to keep alive are not known anymore,
