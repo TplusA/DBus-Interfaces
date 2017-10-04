@@ -101,6 +101,34 @@
         </method>
 
         <!--
+        Set specific repeat mode or toggle.
+
+        Valid modes are "off", "one", and "all". Pass the special value
+        "toggle" to activate the "next" repeat mode.
+
+        Note that this is \e not a queue/URL FIFO command. Rather, this is a
+        command directed at players that maintain their own playlists. Those
+        that rely on external playlists should ignore this command.
+        -->
+        <method name="SetRepeatMode">
+            <arg name="mode" type="s" direction="in"/>
+        </method>
+
+        <!--
+        Set specific shuffle mode or toggle.
+
+        Valid modes are "off" and "on". Pass the special value "toggle" to
+        activate the "next" shuffle mode.
+
+        Note that this is \e not a queue/URL FIFO command. Rather, this is a
+        command directed at players that maintain their own playlists. Those
+        that rely on external playlists should ignore this command.
+        -->
+        <method name="SetShuffleMode">
+            <arg name="mode" type="s" direction="in"/>
+        </method>
+
+        <!--
         Emitted when a stream has just started playing or continues playing.
 
         This signal is emitted for both, newly started streams and streams that
@@ -251,6 +279,29 @@
         <signal name="SpeedChanged">
             <arg name="id" type="q"/>
             <arg name="speed_factor" type="d"/>
+        </signal>
+
+        <!--
+        Emitted when the playback mode has changed.
+
+        The two modes "repeat" and "shuffle" are always emitted together in a
+        single signal so that glitches are avoided. Some players may not like
+        the idea of having a repeat-one mode combined with shuffle mode, so
+        they may switch shuffle off the instant repeat-one is activated. They
+        may also switch shuffle on again when selecting a different repeat
+        mode.
+
+        Note that this signal is only emitted by players that maintain their
+        own playlists. In particular, the T+A streamplayer does not emit these
+        signals since the UI is managing the playlists, and the UI does not
+        emit these signals either.
+
+        See \c de.tahifi.Streamplayer.Playback.SetRepeatMode and
+        rc de.tahifi.Streamplayer.Playback.SetShuffleMode for valid mode names.
+        -->
+        <signal name="PlaybackModeChanged">
+            <arg name="repeat" type="s" direction="out"/>
+            <arg name="shuffle" type="s" direction="out"/>
         </signal>
     </interface>
 </node>
