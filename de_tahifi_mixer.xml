@@ -1,0 +1,133 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/sources">
+    <interface name="de.tahifi.Mixer.Volume">
+        <!--
+        Read out all mixer volume controls supported by the implementation of
+        this method.
+
+        The return value is an array of tuples comprising of an ID, a
+        human-readable name, scale, minimum volume level, maximum volume level,
+        volume step, minimum and maximum volume in decibels, and the initial
+        values.
+
+        See \c de.tahifi.Mixer.Volume.GetMaster for more information.
+
+        \see
+            \c de.tahifi.Mixer.Volume.GetMaster
+        -->
+        <method name="GetControls">
+            <arg name="controls" type="a(qssddddddy)" direction="out"/>
+        </method>
+
+        <!--
+        Read out master volume control.
+
+        This is the similar to \c de.tahifi.Mixer.Volume.GetControls, but this
+        method returns only a single control for the master. If there is no
+        such thing, then the method returns a D-Bus error.
+
+        \param out_id
+            Numeric ID of the master volume control.
+
+        \param out_name
+            Name the master volume control, subject to internationalization.
+            The name will be given in plain English.
+
+        \param out_scale
+            Name of the units used for the volume scale. Supported scales are
+            "steps" and "dB". Steps are plain numbers with no further meaning
+            (other than higher numbers probably correspond to higher volume).
+
+        \param out_min, out_max
+            Minimum and maximum value for the volume control, including the
+            boundaries. Note that the values may be negative.
+
+        \param out_step
+            Minimum step between value levels. For steps scale, the value of
+            this parameter is usually 1.0.
+
+        \param out_min_db, out_max_db
+            Dynamic range on scale. These fields may be \c NAN in case the
+            dynamic range is unknown.
+
+        \param out_volume, out_is_maybe_muted
+            Initial volume level and mute state. In case the volume level is
+            NaN, it is unknown. The mute state is either 0, 1, or 2, where 2
+            means unknown.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="GetMaster">
+            <arg name="id" type="q" direction="out"/>
+            <arg name="name" type="s" direction="out"/>
+            <arg name="scale" type="s" direction="out"/>
+            <arg name="min" type="d" direction="out"/>
+            <arg name="max" type="d" direction="out"/>
+            <arg name="step" type="d" direction="out"/>
+            <arg name="min_db" type="d" direction="out"/>
+            <arg name="max_db" type="d" direction="out"/>
+            <arg name="volume" type="d" direction="out"/>
+            <arg name="is_maybe_muted" type="y" direction="out"/>
+        </method>
+
+        <!--
+        Request setting volume control to given values.
+        -->
+        <method name="Set">
+            <arg name="id" type="q" direction="in"/>
+            <arg name="volume" type="d" direction="in"/>
+            <arg name="is_muted" type="b" direction="in"/>
+        </method>
+
+        <!--
+        Request volume level and mute state for given control.
+        -->
+        <method name="Get">
+            <arg name="id" type="q" direction="in"/>
+            <arg name="volume" type="d" direction="out"/>
+            <arg name="is_maybe_muted" type="y" direction="out"/>
+        </method>
+
+        <!--
+        Emitted when the volume setting has changed for given control.
+        -->
+        <signal name="Updated">
+            <arg name="id" type="q" direction="out"/>
+            <arg name="volume" type="d" direction="out"/>
+            <arg name="is_maybe_muted" type="y" direction="out"/>
+        </signal>
+
+        <!--
+        Emitted when the volume control properties are changed.
+
+        All properties are sent along with the signal so that it is not
+        necessary for clients to read out the properties again. Volume level
+        and mute state are included as well so that transitional out-of-bounds
+        states are avoided.
+
+        The control with ID \c old_id is replaced by the control with ID
+        \c new_id (frequently, these IDs with be the same). In case a new
+        control has been added, its ID will be \c new_id and \c old_id will be
+        the set to the invalid ID (\c UINT16_MAX).
+
+        In case the control with id \c old_id has been entirely removed, the
+        \c new_id parameter will be set to the invalid ID (\c UINT16_MAX). The
+        remaining fields are undefined in this case.
+        -->
+        <signal name="ControlChanged">
+            <arg name="old_id" type="q" direction="out"/>
+            <arg name="new_id" type="q" direction="out"/>
+            <arg name="name" type="s" direction="out"/>
+            <arg name="scale" type="s" direction="out"/>
+            <arg name="min" type="d" direction="out"/>
+            <arg name="max" type="d" direction="out"/>
+            <arg name="step" type="d" direction="out"/>
+            <arg name="min_db" type="d" direction="out"/>
+            <arg name="max_db" type="d" direction="out"/>
+            <arg name="volume" type="d" direction="out"/>
+            <arg name="is_maybe_muted" type="y" direction="out"/>
+        </signal>
+    </interface>
+</node>
