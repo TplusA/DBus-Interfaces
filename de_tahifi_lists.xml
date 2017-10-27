@@ -469,6 +469,242 @@
         </method>>
 
         <!--
+        Get a string key which defines a location in the list hierarchy.
+
+        The string returned is a location key, i.e., a URL following one of the
+        resource locator schemes (either a simple scheme or a reference
+        scheme). It can be used in playlists or can be passed to the smartphone
+        app so that it can have a deeper understanding of what exactly the
+        appliance is currently playing.
+
+        \param arg_list_id, arg_item_id
+            Location for which a location key shall be generated.
+
+        \param arg_as_reference_key
+            If false, then a simple-scheme location key is returned; otherwise,
+            a reference-scheme location key is returned.
+
+        \param out_error_code
+            The D-Bus method returns an error code to the caller. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
+
+        \param out_location_key
+            The generated location key.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="GetLocationKey">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="item_id" type="u" direction="in"/>
+            <arg name="as_reference_key" type="b" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="location_key" type="s" direction="out"/>
+        </method>
+
+        <!--
+        Get a string which defines a trace through the list hierarchy.
+
+        This method is needed for resuming playback after a power cycle or for
+        passing playback state to the smartphone app.
+
+        The player is supposed to retrieve a location trace when the currently
+        playing stream changes. Each time the user actively selects a location
+        to play (any point in a list hierarchy, stream or list), the player
+        stores the selected point (list ID/item ID) as reference point.
+        Starting from the reference point, the list crawler searches for
+        streams and passes them one by one to the stream player. Every time the
+        stream player reports that a stream has started playing, a location
+        trace to that stream must be generated. This location trace contains
+        all that is needed to reconstruct the list crawler's internal state so
+        that it can resume its work from the location last played, even after a
+        system crash or a power cycle.
+
+        It might be a good idea to call this method asynchronously. The method
+        is supposed to be fast, but there are no guarantees across the various
+        list brokers. Usually, the location trace is not needed in the place it
+        is requested anyway, so an asynchronous call seems well-suited in most
+        situations.
+
+        \param arg_list_id, arg_item_id
+            Location of the referenced resource. It must be located in the
+            subtree below the reference point; it cannot be the reference point
+            itself.
+
+        \param arg_ref_list_id, arg_ref_item_id
+            Reference point. If both values are zero, then a full trace to the
+            root list is generated.
+
+        \param out_error_code
+            The D-Bus method returns an error code to the caller. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
+
+        \param out_location_trace
+            The generated location trace.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+
+        \see #tdbus_lists_navigation_call_realize_location()
+        -->
+        <method name="GetLocationTrace">
+            <arg name="list_id" type="u" direction="in"/>
+            <arg name="item_id" type="u" direction="in"/>
+            <arg name="ref_list_id" type="u" direction="in"/>
+            <arg name="ref_item_id" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="location_trace" type="s" direction="out"/>
+        </method>
+
+        <!--
+        Get list ID and item ID for given location key or location trace.
+
+        Resolving locations (especially long location traces which involve many
+        network accesses) can take quite a long time to finish on networked
+        lists. To avoid running into D-Bus timeouts in case of sluggish network
+        or server performance, this method returns an access token and reports
+        its results via the \c RealizeLocationResult signal when done.
+
+        Since this method starts location realization in the background, it
+        will return fast, making it suitable to synchronous invocation.
+        Asynchronous retrieval of the result is always enforced by API design.
+
+        Note: USB devices can be slow, too...
+
+        \param arg_location_url
+            A location key or location trace with protocol specification
+            matching the list broker.
+
+        \param out_error_code
+            The method may error out early with an error code. In this case, no
+            \c RealizeLocationResult signal will be emitted. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
+
+        \param out_cookie
+            A random, non-zero value used to figure out which query the result
+            signal belongs to.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+
+        \see #tdbus_lists_navigation_call_get_location_key()
+        \see #tdbus_lists_navigation_call_get_location_trace()
+        \see #tdbus_lists_navigation_call_abort_realize_location_sync()
+        \see #tdbus_lists_navigation_emit_realize_location_result()
+        -->
+        <method name="RealizeLocation">
+            <arg name="location_url" type="s" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="cookie" type="u" direction="out"/>
+        </method>
+
+        <!--
+        Stop realizing a location key/trace if result is not needed anymore.
+
+        The method returns successfully in case the realization process was
+        aborted before the result has been delivered. In this case, however,
+        the \c RealizeLocationResult signal will still be emitted indicating
+        abortion via error code.
+
+        If there is no ongoing realization operation which matches the given
+        cookie the time the method is invoked, then a D-Bus error is returned.
+
+        \note
+            Even in case of error, it is still possible for the
+            \c RealizeLocationResult signal to be emitted, with or without an
+            error. This will happen in case the abort command was processed
+            after the trace has been completed and the corresponding signal has
+            been emitted, but before the caller has received the signal. This
+            is not an error, but an unavoidable race condition that any caller
+            must be able to detect and handle gracefully.
+
+        \see #tdbus_lists_navigation_call_realize_location()
+        -->
+        <method name="AbortRealizeLocation">
+            <arg name="cookie" type="u" direction="in"/>
+        </method>
+
+        <!--
+        Deliver result of resolution of a location trace.
+
+        On success, the result is essentially the location of the resource
+        specified by the query URL, plus the reference list in case the query
+        was a location trace.
+
+        \note
+            Obtaining the parent of the reference list is a supported
+            operation, but the result is broker-specific. The parent list ID
+            may always be returned as invalid, always refer to the root list,
+            or refer to any list somewhere in the list broker's hierarchy.
+            These broker-specific behaviors (which are well-defined for each
+            list broker) may be exploited to implement useful special cases,
+            but a generic client of this API should not try to access the
+            parent of the reference list.
+
+        \param arg_cookie
+            The value returned by \c RealizeLocation().
+
+        \param arg_error_code
+            The D-Bus method returns an error code to the caller. Check file
+            de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
+            values and their documentation.
+
+        \param arg_list_id, arg_item_id
+            The ID of the list which contains the item specified by the
+            location key or location trace, and its position within its
+            containing list. In case of error, the position of the deepest
+            successfully resolved item is returned here; both values are 0 if
+            realizing a location fails early.
+
+        \param arg_ref_list_id
+            This parameter is zero if the input was a location key. In case the
+            input was a location trace, the ID of the reference list is
+            returned through this parameter. The ID will be filled in even in
+            case of error if the reference list was found, but trace
+            realization failed on the path to the destination resource.
+
+        \param arg_distance
+            Distance of the list returned in \p arg_list_id from the reference
+            list (relative depth). This value is non-zero if the IDs returned
+            for the two lists are both valid and not equal. This is also true
+            in case of error.
+
+        \param arg_trace_length
+            If the query was a location trace, then the length of the trace
+            specified by the location trace is returned through this parameter.
+            This value can be used to determine the point of failure in trace
+            realization.  On successful trace realization, \p arg_distance will
+            be positive and equal to this parameter. This value is always 0 for
+            location key queries.
+
+        \param arg_list_title
+            Name of the list referenced by \p arg_list_id (UTF-8).
+
+        \param arg_list_title_translatable
+            True if the string in \p arg_list_title is subject to i18n within
+            the UI, false if the string shall be displayed as is.
+
+        \param object
+            GDBus clutter.
+
+        \see #tdbus_lists_navigation_call_realize_location()
+        -->
+        <signal name="RealizeLocationResult">
+            <arg name="cookie" type="u"/>
+            <arg name="error_code" type="y"/>
+            <arg name="list_id" type="u"/>
+            <arg name="item_id" type="u"/>
+            <arg name="ref_list_id" type="u"/>
+            <arg name="distance" type="u"/>
+            <arg name="trace_length" type="u"/>
+            <arg name="list_title" type="s"/>
+            <arg name="list_title_translatable" type="b"/>
+        </signal>
+
+        <!--
         Indicate that the list with the given list ID cannot be used anymore.
 
         There are two particular reasons why a list cannot be used anymore,
