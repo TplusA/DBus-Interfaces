@@ -83,8 +83,29 @@ enum DE_TAHIFI_LISTS_ERRORS_ENUM_NAME
     /*! System is busy, try again later at any point. */
     DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY),
 
+    /*! Value out of range. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(OUT_OF_RANGE),
+
+    /*! Some entity was empty when it wasn't supposed to. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(EMPTY),
+
+    /*! Some overflow occurred (integer, buffer, ...). */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(OVERFLOWN),
+
+    /*! Some underflow occurred (integer, buffer, ...). */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(UNDERFLOWN),
+
+    /*! Stream URL invalid. Added to be more specific than INVALID_URI. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(INVALID_STREAM_URL),
+
+    /*! StrBo URL invalid. Added to be more specific than INVALID_URI. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(INVALID_STRBO_URL),
+
+    /*! Resource is not available. */
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(NOT_FOUND),
+
     /*! Stable name for the highest-valued error code. */
-    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(LAST_ERROR_CODE) = DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(BUSY),
+    DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(LAST_ERROR_CODE) = DE_TAHIFI_LISTS_ERRORS_ENUM_VALUE(NOT_FOUND),
 };
 
 #undef DE_TAHIFI_LISTS_ERRORS_ENUM_NAME

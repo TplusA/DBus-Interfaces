@@ -67,6 +67,13 @@ class ListError
         "BUSY_3000",
         "BUSY_5000",
         "BUSY",
+        "OUT_OF_RANGE",
+        "EMPTY",
+        "OVERFLOWN",
+        "UNDERFLOWN",
+        "INVALID_STREAM_URL",
+        "INVALID_STRBO_URL",
+        "NOT_FOUND",
     };
 
     static_assert(sizeof(names_) / sizeof(names_[0]) == static_cast<size_t>(ListError::Code::LAST_ERROR_CODE) + 1U,
