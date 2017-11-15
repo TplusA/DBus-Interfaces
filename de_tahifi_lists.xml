@@ -663,8 +663,14 @@
             This parameter is zero if the input was a location key. In case the
             input was a location trace, the ID of the reference list is
             returned through this parameter. The ID will be filled in even in
-            case of error if the reference list was found, but trace
-            realization failed on the path to the destination resource.
+            case of error if the reference list was found before an error
+            occurred on the path to the destination resource.
+
+        \param arg_ref_item_id
+            Position of the first item within the reference list on the path to
+            the destination resource. In case of error, this value will be
+            2^32-1, but it may also be filled in even in case of error (similar
+            to \p arg_ref_list_id).
 
         \param arg_distance
             Distance of the list returned in \p arg_list_id from the reference
@@ -698,6 +704,7 @@
             <arg name="list_id" type="u"/>
             <arg name="item_id" type="u"/>
             <arg name="ref_list_id" type="u"/>
+            <arg name="ref_item_id" type="u"/>
             <arg name="distance" type="u"/>
             <arg name="trace_length" type="u"/>
             <arg name="list_title" type="s"/>
