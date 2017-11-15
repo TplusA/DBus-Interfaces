@@ -8,6 +8,7 @@
         <signal name="Start"/>
         <signal name="Stop"/>
         <signal name="Pause"/>
+        <signal name="Resume"/>
         <signal name="Next"/>
         <signal name="Previous"/>
 
