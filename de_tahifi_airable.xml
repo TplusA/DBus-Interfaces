@@ -107,8 +107,9 @@
             True if the user has logged in (or tried to), false if the user has
             logged out (or tried to).
 
-        \param arg_failed
-            True if an attempt to log in or out has failed.
+        \param arg_error_code
+            Error code for the login or logout attempt. This is a regular list
+            error code as used in the \c de.tahifi.Lists.Navigation interface.
 
         \param arg_info
             Additional information about the log in or log out action. In case
@@ -123,7 +124,7 @@
             <arg name="service_id" type="s"/>
             <arg name="actor_id" type="y"/>
             <arg name="log_in" type="b"/>
-            <arg name="failed" type="b"/>
+            <arg name="error_code" type="y"/>
             <arg name="info" type="s"/>
         </signal>
     </interface>
