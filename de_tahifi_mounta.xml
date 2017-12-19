@@ -28,7 +28,7 @@
             GDBus clutter.
         -->
         <method name="GetAll">
-            <arg name="usbdevices" type="a(qss(uu))" direction="out"/>
+            <arg name="usbdevices" type="a(qsss)" direction="out"/>
             <arg name="volumes" type="a(ussq)" direction="out"/>
         </method>
 
@@ -60,7 +60,7 @@
             <arg name="id" type="q"/>
             <arg name="devname" type="s"/>
             <arg name="rootpath" type="s"/>
-            <arg name="usbport" type="(uu)"/>
+            <arg name="usbport" type="s"/>
         </signal>
 
         <!--
