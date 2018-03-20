@@ -1,6 +1,32 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node name="/de/tahifi/sources">
+    <interface name="de.tahifi.AudioPath.Appliance">
+        <!--
+        Tell the daemon whether or not the appliance is ready for playback.
+
+        \param arg_state
+            Appliance's sound system state (0 = not ready, 1 = ready,
+            2 = unknown).
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="SetReadyState">
+            <arg name="state" type="y" direction="in"/>
+        </method>
+
+        <!--
+        Check what the daemon thinks the appliance's sound system state is.
+
+        See \c de.tahifi.AudioPath.Appliance.SetReadyState() for how to
+        interpret the value of the returned state.
+        -->
+        <method name="GetState">
+            <arg name="state" type="y" direction="out"/>
+        </method>
+    </interface>
+
     <interface name="de.tahifi.AudioPath.Manager">
         <!--
         Register an audio player.
