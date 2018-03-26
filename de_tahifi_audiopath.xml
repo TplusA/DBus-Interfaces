@@ -226,7 +226,41 @@
         </signal>
 
         <!--
+        Signal emitted when an audio path is about to be activated.
+
+        The audio path has been established and the player is ready to go when
+        this signal is emitted. However, the player is not yet allowed to play
+        because the appliance has told us that it is currently not ready to
+        produce any sound. Thus, the audio path is deferred.
+
+        The \c de.tahifi.AudioPath.Manager.PathActivated signal is to be
+        expected next (unless another audio path is activated in the meantime).
+        The \c de.tahifi.AudioPath.Manager.PathDeferred signal is emitted only
+        in case the use of the audio path has really been deferred, otherwise
+        the signal emission is omitted.
+
+        \param arg_source_id
+            ID of the selected source, empty in case no source is selected
+            anymore. There might still be an active player in the latter case.
+
+        \param arg_player_id
+            ID of the active player, empty in case no player is active. An
+            empty player ID implies an empty source ID (but not the other way
+            around).
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="PathDeferred">
+            <arg name="source_id" type="s"/>
+            <arg name="player_id" type="s"/>
+        </signal>
+
+        <!--
         Signal emitted after an audio path has been activated.
+
+        The audio path has been established and allowed to be used. The player
+        is allowed to play when this signal is emitted.
 
         \param arg_source_id
             ID of the selected source, empty in case no source is selected
@@ -247,6 +281,22 @@
     </interface>
 
     <interface name="de.tahifi.AudioPath.Source">
+        <!--
+        Called when the audio source has been selected, but is not allowed to
+        start producing any sound just yet.
+
+        The audio source is thus in a "half selected" state. The audio path has
+        been established, logically, but may not be used for playback yet. From
+        the view of an external observer, the audio path can be considered
+        "done" as far as the Streaming Board is concerned. From the view of the
+        audio path, it cannot be used yet because it is not allowed to.
+
+        See also \c de.tahifi.AudioPath.Manager.PathDeferred.
+        -->
+        <method name="SelectedOnHold">
+            <arg name="source_id" type="s" direction="in"/>
+        </method>
+
         <!--
         Called when the source has been selected.
 
