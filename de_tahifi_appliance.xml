@@ -1,0 +1,20 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/airable">
+    <interface name="de.tahifi.Appliance.Power">
+        <method name="RequestState">
+            <arg name="state" type="y" direction="in"/>
+            <arg name="current_state" type="y" direction="out"/>
+            <arg name="request_pending" type="b" direction="out"/>
+        </method>
+
+        <method name="GetState">
+            <arg name="state" type="y" direction="out"/>
+        </method>
+
+        <signal name="StateChanged">
+            <arg name="prev_state" type="y"/>
+            <arg name="new_state" type="y"/>
+        </signal>
+    </interface>
+</node>

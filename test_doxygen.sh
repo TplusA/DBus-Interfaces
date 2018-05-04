@@ -21,6 +21,7 @@ $CODEGEN --generate-c-code=mounta_dbus            --c-namespace tdbus           
 $CODEGEN --generate-c-code=audiopath_dbus         --c-namespace tdbus_aupath       --interface-prefix de.tahifi.AudioPath.    ../de_tahifi_audiopath.xml
 $CODEGEN --generate-c-code=streamplayer_dbus      --c-namespace tdbus_splay        --interface-prefix de.tahifi.Streamplayer. ../de_tahifi_streamplayer.xml
 $CODEGEN --generate-c-code=mixer_dbus             --c-namespace tdbus_mixer        --interface-prefix de.tahifi.Mixer.        ../de_tahifi_mixer.xml
+$CODEGEN --generate-c-code=appliance_dbus         --c-namespace tdbus_appliance    --interface-prefix de.tahifi.Appliance.    ../de_tahifi_appliance.xml
 $CODEGEN --generate-c-code=connman_dbus           --c-namespace tdbus_connman      --interface-prefix net.connman.            ../net_connman.xml
 $CODEGEN --generate-c-code=logind_dbus            --c-namespace tdbus_logind       --interface-prefix org.freedesktop.login1. ../org_freedesktop_login1.xml
 $CODEGEN --generate-c-code=systemd_dbus           --c-namespace tdbus_systemd      --interface-prefix org.freedesktop.systemd1. ../org_freedesktop_systemd1.xml
@@ -39,6 +40,7 @@ $DOCEXTRACT -i ../de_tahifi_mounta.xml       -o de_tahifi_mounta.md       -H de_
 $DOCEXTRACT -i ../de_tahifi_audiopath.xml    -o de_tahifi_audiopath.md    -H de_tahifi_audiopath.h    -c tdbus_aupath       -s de.tahifi.AudioPath.    -n 'Audio Paths'
 $DOCEXTRACT -i ../de_tahifi_streamplayer.xml -o de_tahifi_streamplayer.md -H de_tahifi_streamplayer.h -c tdbus_splay        -s de.tahifi.Streamplayer. -n Streamplayer
 $DOCEXTRACT -i ../de_tahifi_mixer.xml        -o de_tahifi_mixer.md        -H de_tahifi_mixer.h        -c tdbus_mixer        -s de.tahifi.Mixer.        -n 'Volume and mixer control'
+$DOCEXTRACT -i ../de_tahifi_appliance.xml    -o de_tahifi_appliance.md    -H de_tahifi_appliance.h    -c tdbus_appliance    -s de.tahifi.Appliance.    -n 'Appliance state and control'
 $DOCEXTRACT -i ../net_connman.xml            -o net_connman.md            -H net_connman.h            -c tdbus_connman      -s net.connman.            -n Connman
 $DOCEXTRACT -i ../org_freedesktop_login1.xml -o org_freedesktop_logind.md -H org_freedesktop_logind.h -c tdbus_logind       -s org.freedesktop.login1. -n Logind
 $DOCEXTRACT -i ../org_freedesktop_systemd1.xml -o org_freedesktop_systemd.md -H org_freedesktop_systemd.h -c tdbus_systemd  -s org.freedesktop.systemd1. -n Systemd
