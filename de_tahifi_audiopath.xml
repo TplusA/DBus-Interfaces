@@ -97,6 +97,10 @@
         \param arg_source_id
             Non-empty ID of the source that wants to play.
 
+        \param arg_request_data
+            Possibly empty data for the source request. This can be any extra
+            data which may take an influence on how the audio path is switched.
+
         \param out_player_id
             ID of the player that was activated.
 
@@ -109,6 +113,7 @@
         -->
         <method name="RequestSource">
             <arg name="source_id" type="s" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in"/>
             <arg name="player_id" type="s" direction="out"/>
             <arg name="switched" type="b" direction="out"/>
         </method>
@@ -127,11 +132,17 @@
             True in case any active player should be deactivated (even in case
             no source is selected), false otherwise.
 
+        \param arg_request_data
+            Possibly empty data for the deactivation request. This can be any
+            extra data which may take an influence on how the audio path is
+            shut down.
+
         \param proxy, cancellable, error
             GDBus clutter.
         -->
         <method name="ReleasePath">
             <arg name="deactivate_player" type="b" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in"/>
         </method>
 
         <!--
@@ -295,6 +306,7 @@
         -->
         <method name="SelectedOnHold">
             <arg name="source_id" type="s" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in"/>
         </method>
 
         <!--
@@ -307,6 +319,7 @@
         -->
         <method name="Selected">
             <arg name="source_id" type="s" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in"/>
         </method>
 
         <!--
@@ -318,6 +331,7 @@
         -->
         <method name="Deselected">
             <arg name="source_id" type="s" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in"/>
         </method>
     </interface>
 
@@ -328,7 +342,9 @@
         As long as the player is active, it is allowed to bind exclusively to
         the audio device.
         -->
-        <method name="Activate"/>
+        <method name="Activate">
+            <arg name="request_data" type="a{sv}" direction="in"/>
+        </method>
 
         <!--
         Called to deactivate the player.
@@ -340,6 +356,8 @@
         The player must not claim the audio device while not active and it must
         reject any play or queue requests while in non-active state.
         -->
-        <method name="Deactivate"/>
+        <method name="Deactivate">
+            <arg name="request_data" type="a{sv}" direction="in"/>
+        </method>
     </interface>
 </node>
