@@ -102,4 +102,88 @@
             <arg name="index" type="q"/>
         </signal>
     </interface>
+
+    <interface name="de.tahifi.Dcpd.Network">
+        <!--
+        Read out all network information.
+
+        This includes all network interface controllers, all services, just
+        about everything. The trick about this interface is that all
+        information must always be retrieved in a single go. As a result, there
+        is no possibility for this interface to deliver an inconsistent view on
+        the network (assuming the callee always provides consistent data).
+
+        \param arg_have_version
+            The caller may have retrieved all network information already
+            before and may wish to avoid transferring kilobytes of already
+            known data. To this end, network information data is versioned.
+            When calling this method, the caller can send the version number of
+            the data it already has through this parameter. A full set of
+            network information is only returned in case the version number
+            does not match. Sending an empty string always causes the callee to
+            return the complete network information.
+
+        \param[out] out_version
+            The version number of the network data. This string is never empty.
+            In case this version number is the same as the version number
+            passed via \p arg_have_version, then \p out_network_data will be
+            empty.
+
+        \param[out] out_network_data
+            All network data available to the callee. These data are returned
+            as JSON object to avoid a big, overspecified, and thus inflexible
+            interface at this point. It is likely that more data needs to be
+            added in the future, so sending them around as JSON seems ideal.
+            In case \p out_network_data is empty, the caller should check if
+            \p out_version matches the version number sent in
+            \p arg_have_version. If they match, then the data didn't change. If
+            they mismatch, then the network data really is completely empty.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="GetAll">
+            <arg name="have_version" type="s" direction="in"/>
+            <arg name="version" type="s" direction="out"/>
+            <arg name="network_data" type="s" direction="out"/>
+        </method>
+
+        <!--
+        Request setting network configuration.
+
+        This method returns immediately after input sanitation. On failure, the
+        method will fail so that the caller will immediately know if something
+        was wrong with the requested configuration.
+
+        On success, a network reconfiguration may or may not be triggered in
+        the background, and this attempt may succeed or it may fail and one (or
+        multiple) ways. These are complex interactions, and their outcome is
+        unknown at the time the method returns successfully. The implications
+        are that the caller cannot be informed about the outcome at this point,
+        and therefore the caller must not make any assumptions on expected
+        system behavior or state. Asynchronous D-Bus signals will be sent
+        around in case something interesting happens, so these must be
+        monitored by clients who are interested in changes of network status.
+
+        \param arg_service_name
+            Name of a network service as understood by ConnMan. This string may
+            be left empty in case the service does not exist yet, but in this
+            case the configuration must be self-contained enough so that a
+            service name could be generated from it.
+
+        \param arg_configuration
+            JSON object containing the requested network configuration. These
+            data are subject to input sanitation: incomplete or plain wrong
+            data will be rejected, and the method call will return with an
+            error. The whole configuration request will be ignored in case of
+            failure, no data will be stored on the Streaming Board.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="SetServiceConfiguration">
+            <arg name="service_name" type="s" direction="in"/>
+            <arg name="configuration" type="s" direction="in"/>
+        </method>
+    </interface>
 </node>
