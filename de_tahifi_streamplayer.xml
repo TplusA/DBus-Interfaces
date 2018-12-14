@@ -31,7 +31,9 @@
 
     <interface name="de.tahifi.Streamplayer.Playback">
         <method name="Start"/>
-        <method name="Stop"/>
+        <method name="Stop">
+            <arg name="reason" type="s"/>
+        </method>
         <method name="Pause"/>
 
         <!--
