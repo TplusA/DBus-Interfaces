@@ -113,5 +113,23 @@
             <arg name="id" type="q"/>
             <arg name="rootpath" type="s"/>
         </signal>
+
+        <!--
+        Emitted before a whole device is removed.
+
+        \param arg_id
+            Internal positive device ID.
+
+        \param arg_rootpath
+            Path to the directory which contains all mountpoints for the
+            device.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="DeviceWillBeRemoved">
+            <arg name="id" type="q"/>
+            <arg name="rootpath" type="s"/>
+        </signal>
     </interface>
 </node>
