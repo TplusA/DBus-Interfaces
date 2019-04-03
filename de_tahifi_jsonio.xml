@@ -1,0 +1,24 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/">
+    <interface name="de.tahifi.JSONReceiver">
+        <method name="Notify">
+            <arg name="json" type="s" direction="in"/>
+            <arg name="extra" type="s" direction="in"/>
+        </method>
+
+        <method name="Tell">
+            <arg name="json" type="s" direction="in"/>
+            <arg name="extra" type="s" direction="in"/>
+            <arg name="answer" type="s" direction="out"/>
+            <arg name="answer_extra" type="s" direction="out"/>
+        </method>
+    </interface>
+
+    <interface name="de.tahifi.JSONEmitter">
+        <signal name="Object">
+            <arg name="json" type="s"/>
+            <arg name="extra" type="s"/>
+        </signal>
+    </interface>
+</node>
