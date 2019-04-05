@@ -4,21 +4,27 @@
     <interface name="de.tahifi.JSONReceiver">
         <method name="Notify">
             <arg name="json" type="s" direction="in"/>
-            <arg name="extra" type="s" direction="in"/>
+            <arg name="extra" type="as" direction="in"/>
         </method>
 
         <method name="Tell">
             <arg name="json" type="s" direction="in"/>
-            <arg name="extra" type="s" direction="in"/>
+            <arg name="extra" type="as" direction="in"/>
             <arg name="answer" type="s" direction="out"/>
-            <arg name="answer_extra" type="s" direction="out"/>
+            <arg name="answer_extra" type="as" direction="out"/>
         </method>
     </interface>
 
     <interface name="de.tahifi.JSONEmitter">
+        <method name="Get">
+            <arg name="params" type="as" direction="in"/>
+            <arg name="json" type="s" direction="out"/>
+            <arg name="extra" type="as" direction="out"/>
+        </method>
+
         <signal name="Object">
             <arg name="json" type="s"/>
-            <arg name="extra" type="s"/>
+            <arg name="extra" type="as"/>
         </signal>
     </interface>
 </node>
