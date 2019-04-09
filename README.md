@@ -3,8 +3,10 @@
 ## Copyright and contact
 
 The T+A Streaming Board D-Bus interfaces (T+A-D-Bus) are released under the
-terms of the GNU General Public License version 3 (GPLv3). See file
-<tt>COPYING</tt> for licensing terms.
+terms of the GNU General Public License version 2 or (at your option) any later
+version. See file <tt>COPYING</tt> for licensing terms of the GNU General
+Public License version 2, or <tt>COPYING.GPLv3</tt> for licensing terms of the
+GNU General Public License version 3.
 
 Contact:
 
