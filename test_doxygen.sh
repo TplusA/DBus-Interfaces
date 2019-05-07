@@ -19,6 +19,7 @@ $CODEGEN --generate-c-code=dbusdl_dbus            --c-namespace tdbus           
 $CODEGEN --generate-c-code=lists_dbus             --c-namespace tdbus_lists        --interface-prefix de.tahifi.Lists.        ../de_tahifi_lists.xml
 $CODEGEN --generate-c-code=mounta_dbus            --c-namespace tdbus              --interface-prefix de.tahifi.              ../de_tahifi_mounta.xml
 $CODEGEN --generate-c-code=audiopath_dbus         --c-namespace tdbus_aupath       --interface-prefix de.tahifi.AudioPath.    ../de_tahifi_audiopath.xml
+$CODEGEN --generate-c-code=aupad_dbus             --c-namespace tdbus_aupad        --interface-prefix de.tahifi.AuPaD.        ../de_tahifi_aupad.xml
 $CODEGEN --generate-c-code=streamplayer_dbus      --c-namespace tdbus_splay        --interface-prefix de.tahifi.Streamplayer. ../de_tahifi_streamplayer.xml
 $CODEGEN --generate-c-code=mixer_dbus             --c-namespace tdbus_mixer        --interface-prefix de.tahifi.Mixer.        ../de_tahifi_mixer.xml
 $CODEGEN --generate-c-code=appliance_dbus         --c-namespace tdbus_appliance    --interface-prefix de.tahifi.Appliance.    ../de_tahifi_appliance.xml
@@ -40,6 +41,7 @@ $DOCEXTRACT -i ../de_tahifi_filetransfer.xml -o de_tahifi_dbusdl.md       -H de_
 $DOCEXTRACT -i ../de_tahifi_lists.xml        -o de_tahifi_lists.md        -H de_tahifi_lists.h        -c tdbus_lists        -s de.tahifi.Lists.        -n Lists
 $DOCEXTRACT -i ../de_tahifi_mounta.xml       -o de_tahifi_mounta.md       -H de_tahifi_mounta.h       -c tdbus              -s de.tahifi.              -n MounTA
 $DOCEXTRACT -i ../de_tahifi_audiopath.xml    -o de_tahifi_audiopath.md    -H de_tahifi_audiopath.h    -c tdbus_aupath       -s de.tahifi.AudioPath.    -n 'Audio Paths'
+$DOCEXTRACT -i ../de_tahifi_aupad.xml        -o de_tahifi_aupad.md        -H de_tahifi_aupad.h        -c tdbus_aupad        -s de.tahifi.AuPaD.        -n 'Audio path daemon'
 $DOCEXTRACT -i ../de_tahifi_streamplayer.xml -o de_tahifi_streamplayer.md -H de_tahifi_streamplayer.h -c tdbus_splay        -s de.tahifi.Streamplayer. -n Streamplayer
 $DOCEXTRACT -i ../de_tahifi_mixer.xml        -o de_tahifi_mixer.md        -H de_tahifi_mixer.h        -c tdbus_mixer        -s de.tahifi.Mixer.        -n 'Volume and mixer control'
 $DOCEXTRACT -i ../de_tahifi_appliance.xml    -o de_tahifi_appliance.md    -H de_tahifi_appliance.h    -c tdbus_appliance    -s de.tahifi.Appliance.    -n 'Appliance state and control'
