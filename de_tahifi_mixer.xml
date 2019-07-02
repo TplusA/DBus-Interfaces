@@ -73,11 +73,20 @@
         </method>
 
         <!--
-        Request setting volume control to given values.
+        Request setting volume control to given absolute value.
         -->
         <method name="Set">
             <arg name="id" type="q" direction="in"/>
             <arg name="volume" type="d" direction="in"/>
+            <arg name="is_muted" type="b" direction="in"/>
+        </method>
+
+        <!--
+        Request changing volume control by given relative value.
+        -->
+        <method name="SetRelative">
+            <arg name="id" type="q" direction="in"/>
+            <arg name="step" type="d" direction="in"/>
             <arg name="is_muted" type="b" direction="in"/>
         </method>
 
