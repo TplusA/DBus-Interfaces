@@ -36,20 +36,27 @@
 
         \param out_scale
             Name of the units used for the volume scale. Supported scales are
-            "steps" and "dB". Steps are plain numbers with no further meaning
-            (other than higher numbers probably correspond to higher volume).
+            "steps", "dB", and "pm". Steps are plain numbers with no further
+            meaning (other than higher numbers probably correspond to higher
+            volume). Scales "steps" and "dB" are absolute volume controls which
+            can also be read out. Scale "pm" means plus/minus and describes a
+            simplistic, incremental volume control with no read-out or other
+            feedback facilities.
 
         \param out_min, out_max
             Minimum and maximum value for the volume control, including the
-            boundaries. Note that the values may be negative.
+            boundaries. Note that these values may be negative. For the pm
+            scale, they are always \c NaN.
 
         \param out_step
             Minimum step between value levels. For steps scale, the value of
-            this parameter is usually 1.0.
+            this parameter is usually 1.0. For pm scale, the value of this
+            parameter is always positive (usually 1.0).
 
         \param out_min_db, out_max_db
             Dynamic range on scale. These fields may be \c NAN in case the
-            dynamic range is unknown.
+            dynamic range is unknown. For the pm scale, these values are always
+            \c NaN.
 
         \param out_volume, out_is_maybe_muted
             Initial volume level and mute state. In case the volume level is
