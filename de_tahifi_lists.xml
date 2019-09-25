@@ -562,14 +562,9 @@
         Get list ID and item ID for given location key or location trace.
 
         Resolving locations (especially long location traces which involve many
-        network accesses) can take quite a long time to finish on networked
-        lists. To avoid running into D-Bus timeouts in case of sluggish network
-        or server performance, this method returns an access token and reports
-        its results via the \c RealizeLocationResult signal when done.
-
-        Since this method starts location realization in the background, it
-        will return fast, making it suitable to synchronous invocation.
-        Asynchronous retrieval of the result is always enforced by API design.
+        network accesses) frequently take quite a long time to finish,
+        especially on network-backed lists. For this reason, this method does
+        not return a result, but always works asynchronously with cookies.
 
         Note: USB devices can be slow, too...
 
@@ -578,53 +573,25 @@
             matching the list broker.
 
         \param out_error_code
-            The method may error out early with an error code. In this case, no
-            \c RealizeLocationResult signal will be emitted. Check file
+            The method may error out early with an error code. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
 
         \param out_cookie
-            A random, non-zero value used to figure out which query the result
-            signal belongs to.
+            Data cookie in case \p out_error_code indicates no error.
 
         \param proxy, cancellable, error
             GDBus clutter.
 
-        \see #tdbus_lists_navigation_call_get_location_key()
-        \see #tdbus_lists_navigation_call_get_location_trace()
-        \see #tdbus_lists_navigation_call_abort_realize_location_sync()
-        \see #tdbus_lists_navigation_emit_realize_location_result()
+        \see
+            #tdbus_lists_navigation_call_realize_location_by_cookie(),
+            #tdbus_lists_navigation_call_get_location_key(),
+            #tdbus_lists_navigation_call_get_location_trace()
         -->
         <method name="RealizeLocation">
             <arg name="location_url" type="s" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="cookie" type="u" direction="out"/>
-        </method>
-
-        <!--
-        Stop realizing a location key/trace if result is not needed anymore.
-
-        The method returns successfully in case the realization process was
-        aborted before the result has been delivered. In this case, however,
-        the \c RealizeLocationResult signal will still be emitted indicating
-        abortion via error code.
-
-        If there is no ongoing realization operation which matches the given
-        cookie the time the method is invoked, then a D-Bus error is returned.
-
-        \note
-            Even in case of error, it is still possible for the
-            \c RealizeLocationResult signal to be emitted, with or without an
-            error. This will happen in case the abort command was processed
-            after the trace has been completed and the corresponding signal has
-            been emitted, but before the caller has received the signal. This
-            is not an error, but an unavoidable race condition that any caller
-            must be able to detect and handle gracefully.
-
-        \see #tdbus_lists_navigation_call_realize_location()
-        -->
-        <method name="AbortRealizeLocation">
-            <arg name="cookie" type="u" direction="in"/>
         </method>
 
         <!--
@@ -645,71 +612,69 @@
             parent of the reference list.
 
         \param arg_cookie
-            The value returned by \c RealizeLocation().
+            Data cookie.
 
-        \param arg_error_code
+        \param out_error_code
             The D-Bus method returns an error code to the caller. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
 
-        \param arg_list_id, arg_item_id
+        \param out_list_id, out_item_id
             The ID of the list which contains the item specified by the
             location key or location trace, and its position within its
             containing list. In case of error, the position of the deepest
             successfully resolved item is returned here; both values are 0 if
             realizing a location fails early.
 
-        \param arg_ref_list_id
+        \param out_ref_list_id
             This parameter is zero if the input was a location key. In case the
             input was a location trace, the ID of the reference list is
             returned through this parameter. The ID will be filled in even in
             case of error if the reference list was found before an error
             occurred on the path to the destination resource.
 
-        \param arg_ref_item_id
+        \param out_ref_item_id
             Position of the first item within the reference list on the path to
             the destination resource. In case of error, this value will be
             2^32-1, but it may also be filled in even in case of error (similar
-            to \p arg_ref_list_id).
+            to \p out_ref_list_id).
 
-        \param arg_distance
-            Distance of the list returned in \p arg_list_id from the reference
+        \param out_distance
+            Distance of the list returned in \p out_list_id from the reference
             list (relative depth). This value is non-zero if the IDs returned
             for the two lists are both valid and not equal. This is also true
             in case of error.
 
-        \param arg_trace_length
+        \param out_trace_length
             If the query was a location trace, then the length of the trace
             specified by the location trace is returned through this parameter.
             This value can be used to determine the point of failure in trace
-            realization.  On successful trace realization, \p arg_distance will
+            realization.  On successful trace realization, \p out_distance will
             be positive and equal to this parameter. This value is always 0 for
             location key queries.
 
-        \param arg_list_title
-            Name of the list referenced by \p arg_list_id (UTF-8).
+        \param out_list_title
+            Name of the list referenced by \p out_list_id (UTF-8).
 
-        \param arg_list_title_translatable
-            True if the string in \p arg_list_title is subject to i18n within
+        \param out_list_title_translatable
+            True if the string in \p out_list_title is subject to i18n within
             the UI, false if the string shall be displayed as is.
 
-        \param object
+        \param proxy, cancellable, error
             GDBus clutter.
-
-        \see #tdbus_lists_navigation_call_realize_location()
         -->
-        <signal name="RealizeLocationResult">
-            <arg name="cookie" type="u"/>
-            <arg name="error_code" type="y"/>
-            <arg name="list_id" type="u"/>
-            <arg name="item_id" type="u"/>
-            <arg name="ref_list_id" type="u"/>
-            <arg name="ref_item_id" type="u"/>
-            <arg name="distance" type="u"/>
-            <arg name="trace_length" type="u"/>
-            <arg name="list_title" type="s"/>
-            <arg name="list_title_translatable" type="b"/>
-        </signal>
+        <method name="RealizeLocationByCookie">
+            <arg name="cookie" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="list_id" type="u" direction="out"/>
+            <arg name="item_id" type="u" direction="out"/>
+            <arg name="ref_list_id" type="u" direction="out"/>
+            <arg name="ref_item_id" type="u" direction="out"/>
+            <arg name="distance" type="u" direction="out"/>
+            <arg name="trace_length" type="u" direction="out"/>
+            <arg name="list_title" type="s" direction="out"/>
+            <arg name="list_title_translatable" type="b" direction="out"/>
+        </method>
 
         <!--
         Indicate that the list with the given list ID cannot be used anymore.
@@ -724,6 +689,47 @@
         <signal name="ListInvalidate">
             <arg name="list_id" type="u"/>
             <arg name="new_list_id" type="u"/>
+        </signal>
+
+        <!--
+        Explicitly abort the data retrieval for given cookies.
+
+        \param arg_cookies
+            An array of pairs of cookie and flag. The flag tells the list
+            broker whether or not to keep the result in case the operation
+            which generated the result has completed successfully. True means
+            that the result should be kept around so that retrieval is still
+            possible (avoids undesired effects of certain race conditions),
+            false means that the result should be dropped in any case (if the
+            caller is not interested in the result anymore).
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="DataAbort">
+            <arg name="cookies" type="a(ub)" direction="in"/>
+        </method>
+
+        <!--
+        Report availability of requested data.
+
+        Multiple requests may complete at roughly the same time, and their
+        completion may be collectively reported in a single signal. The data
+        cookies may be used to retrieve the associated results.
+        -->
+        <signal name="DataAvailable">
+            <arg name="cookies" type="au"/>
+        </signal>
+
+        <!--
+        Report error for requested data.
+
+        Multiple requests may error out at roughly the same time (think network
+        trouble), and their errors may be collectively reported in a single
+        signal. The data cookies sent along are invalidated by this signal.
+        -->
+        <signal name="DataError">
+            <arg name="errors" type="a(uy)"/>
         </signal>
     </interface>
 </node>
