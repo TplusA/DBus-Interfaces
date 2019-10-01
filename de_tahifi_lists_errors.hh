@@ -126,6 +126,43 @@ class ListError
         return *this != Code::OK;
     }
 
+    constexpr bool busy() const noexcept
+    {
+        switch(error_code_)
+        {
+          case Code::BUSY:
+          case Code::BUSY_500:
+          case Code::BUSY_1000:
+          case Code::BUSY_1500:
+          case Code::BUSY_3000:
+          case Code::BUSY_5000:
+            return true;
+
+          case Code::OK:
+          case Code::INTERNAL:
+          case Code::INTERRUPTED:
+          case Code::INVALID_ID:
+          case Code::PHYSICAL_MEDIA_IO:
+          case Code::NET_IO:
+          case Code::PROTOCOL:
+          case Code::AUTHENTICATION:
+          case Code::INCONSISTENT:
+          case Code::NOT_SUPPORTED:
+          case Code::PERMISSION_DENIED:
+          case Code::INVALID_URI:
+          case Code::OUT_OF_RANGE:
+          case Code::EMPTY:
+          case Code::OVERFLOWN:
+          case Code::UNDERFLOWN:
+          case Code::INVALID_STREAM_URL:
+          case Code::INVALID_STRBO_URL:
+          case Code::NOT_FOUND:
+            break;
+        }
+
+        return false;
+    }
+
     constexpr static Code raw_to_code(unsigned int raw_error_code)
     {
         return (raw_error_code <= Code::LAST_ERROR_CODE)
