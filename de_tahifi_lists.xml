@@ -1,6 +1,61 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
  "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node name="/de/tahifi/lists">
+    <!--
+    List navigation and retrieval.
+
+    Many data retrieval D-Bus methods in this interface return data and a data
+    cookie (always named "cookie") which serves as an access token. In case the
+    returned data cookie is 0, the data returned are valid and can be used.
+    This is the lucky case and nothing more needs to be done.
+
+    In case the requested data are not immediately available, however, the data
+    cookie will be a non-zero value, indicating that the returned data are
+    invalid. In this case, the requested data is retrieved from the backing
+    database in the background by the list broker. When available, the data
+    cookie is sent with the \c de.tahifi.Lists.Navigation.DataAvailable signal
+    so that the caller knows when the result is available. Then, the caller
+    uses a variation of the original D-Bus method (suffixed with \c ByCookie)
+    and passes the data cookie instead of the original parameters. This request
+    can always be made synchronously and will usually either succeed or fail
+    fast. (Failure is possible if the data cookie has expired.) The data cookie
+    is invalidated when the results are retrieved (i.e., they can be retrieved
+    only once).
+
+    In case the requested operation cannot be fulfilled due to any error
+    detected while the request is being made, an error code is sent along with
+    the data cookie with the \c de.tahifi.Lists.Navigation.DataError signal.
+    The request may be repeated by the caller, but it depends on the request
+    and error code whether or not it is worthwhile to do so.
+
+    The result of a successfully completed operation may be retrieved as long
+    as the corresponding data cookie does not expire. A data cookie may expire
+    due to timeout (in the range of minutes), memory pressure within the list
+    broker, or list invalidation. Expired data cookies are reported with the
+    \c de.tahifi.Lists.Navigation.DataError signal with a corresponding error
+    code.
+
+    The caller may abort a pending operation at any time by invoking the
+    \c de.tahifi.Lists.Navigation.DataAbort method. Successfully aborted
+    operations are reported with the \c de.tahifi.Lists.Navigation.DataError
+    signal, along with a corresponding error code.
+
+    Beware of race conditions! The request to abort an operation may be sent
+    by the caller after successful completion on behalf of the list broker,
+    before the caller has had a chance to see the completion. In this case the
+    flag sent with the abort request determines whether or not the result is
+    dropped.
+
+    By use of data cookies and thus elimination of back end timings (network,
+    slow disk I/O), the D-Bus methods are guaranteed to return quickly, and it
+    is always safe to use synchronous D-Bus method calls. The asynchronicity
+    required for long-running tasks is achieved by D-Bus signals.
+
+    In case there are too many queued requests, the methods may also error out
+    with a D-Bus error, returning neither a data cookie nor any data. In this
+    case, the caller should repeat its request after a wisely chosen waiting
+    time.
+    -->
     <interface name="de.tahifi.Lists.Navigation">
         <!--
         Retrieve a list of contexts known by the list broker.
@@ -30,7 +85,9 @@
             string tuples, where context IDs are equivalent to array indexes.
             The first string of each tuple is a string ID for the context. The
             second string is a descriptive string for displaying purposes.
-        \param proxy, cancellable, error GDBus clutter.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
         -->
         <method name="GetListContexts">
             <arg name="contexts" type="a(ss)" direction="out"/>
@@ -70,30 +127,52 @@
 
         \param arg_list_id
             Identifier of the list whose items should be retrieved.
+
         \param arg_first_item_id
             Identifier of the first item in the list to be returned.
+
         \param arg_count
             Maximum number of list items to return.
+
+        \param out_cookie
+            Data cookie.
+
         \param out_error_code
             The D-Bus method returns an error code to the caller. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
+
         \param out_first_item
             ID of the first item in the list. This is basically just a copy of
             the \p arg_first_item_id parameter for the client's convenience (no
             need to remember the requested first item ID).
+
         \param out_list
             The requested range of list items is returned through this
             parameter. In case \p out_error_code is not 0, the returned list is
             empty.
-        \param proxy, cancellable, error GDBus clutter.
 
-        \returns True on success, false on error.
+        \param proxy, cancellable, error
+            GDBus clutter.
+
+        \returns
+            True on success, false on error.
         -->
         <method name="GetRange">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="first_item_id" type="u" direction="in"/>
             <arg name="count" type="u" direction="in"/>
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="first_item" type="u" direction="out"/>
+            <arg name="list" type="a(sy)" direction="out"/>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Lists.Navigation.GetRange results.
+        -->
+        <method name="GetRangeByCookie">
+            <arg name="cookie" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="first_item" type="u" direction="out"/>
             <arg name="list" type="a(sy)" direction="out"/>
@@ -124,19 +203,34 @@
         sense to try (e.g., for Airable it would make sense, for USB mass
         storage it wouldn't).
 
-        \param arg_list_id, arg_first_item_id, arg_count, out_error_code,
-            out_first_item
+        \param arg_list_id, arg_first_item_id, arg_count, out_cookie,
+            out_error_code, out_first_item
             These arguments are the same as for \c GetRange.
+
         \param out_list
             The requested range of list items is returned through this
             parameter. In case \p out_error_code is not 0, the returned list is
             empty.
-        \param proxy, cancellable, error GDBus clutter.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
         -->
         <method name="GetRangeWithMetaData">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="first_item_id" type="u" direction="in"/>
             <arg name="count" type="u" direction="in"/>
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="first_item" type="u" direction="out"/>
+            <arg name="list" type="a(sssyy)" direction="out"/>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Lists.Navigation.GetRangeWithMetaData
+        results.
+        -->
+        <method name="GetRangeWithMetaDataByCookie">
+            <arg name="cookie" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="first_item" type="u" direction="out"/>
             <arg name="list" type="a(sssyy)" direction="out"/>
@@ -150,9 +244,12 @@
             These arguments are the same as for \c GetRange, but this method
             does not block on server side and it returns the number of items
             that would be returned instead of the list itself.
+
         \param out_number_of_items
             The number of items that would be returned by \c GetRange.
-        \param proxy, cancellable, error GDBus clutter.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
         -->
         <method name="CheckRange">
             <arg name="list_id" type="u" direction="in"/>
@@ -184,26 +281,49 @@
             \p arg_item_id. This can be used as a starting point when no other
             lists are known yet. Consecutive requests must use the returned
             child list ID to reference the root list.
+
+        \param out_cookie
+            Data cookie.
+
         \param out_error_code
             The D-Bus method returns an error code to the caller. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
+
         \param out_child_list_id
             The D-Bus method returns either the requested list ID, or 0 in case
             of an error (e.g., the specified list item does not exist or is not
             a directory).
+
         \param out_list_title
             Name of the list (UTF-8).
+
         \param out_list_title_translatable
             True if the string in \p out_list_title is subject to i18n within
             the UI, false if the string shall be displayed as is.
-        \param proxy, cancellable, error GDBus clutter.
 
-        \returns True on success, false on error.
+        \param proxy, cancellable, error
+            GDBus clutter.
+
+        \returns
+            True on success, false on error.
         -->
         <method name="GetListId">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="child_list_id" type="u" direction="out"/>
+            <arg name="list_title" type="s" direction="out"/>
+            <arg name="list_title_translatable" type="b" direction="out"/>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Lists.Navigation.GetListId
+        results.
+        -->
+        <method name="GetListIdByCookie">
+            <arg name="cookie" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="child_list_id" type="u" direction="out"/>
             <arg name="list_title" type="s" direction="out"/>
@@ -226,6 +346,19 @@
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
             <arg name="parameter" type="s" direction="in"/>
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="child_list_id" type="u" direction="out"/>
+            <arg name="list_title" type="s" direction="out"/>
+            <arg name="list_title_translatable" type="b" direction="out"/>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Lists.Navigation.GetParameterizedListId
+        results.
+        -->
+        <method name="GetParameterizedListIdByCookie">
+            <arg name="cookie" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="child_list_id" type="u" direction="out"/>
             <arg name="list_title" type="s" direction="out"/>
@@ -242,6 +375,7 @@
 
         \param arg_list_id
             List ID whose parent item is to be determined.
+
         \param out_parent_list_id, out_parent_item_id
             The specific parent item that links to list ID \p arg_list_id. If
             the parent list does not exist, a value of 0 is returned in both
@@ -249,14 +383,19 @@
             \p arg_list_id refers to the root directory, an
             \p out_parent_item_id of 1 is returned to allow distinction between
             erroneous requests and requests from the root directory.
+
         \param out_list_title
             Name of the list (UTF-8).
+
         \param out_list_title_translatable
             True if the string in \p out_list_title is subject to i18n within
             the UI, false if the string shall be displayed as is.
-        \param proxy, cancellable, error GDBus clutter.
 
-        \returns True on success, false on error.
+        \param proxy, cancellable, error
+            GDBus clutter.
+
+        \returns
+            True on success, false on error.
         -->
         <method name="GetParentLink">
             <arg name="list_id" type="u" direction="in"/>
@@ -303,23 +442,45 @@
 
         \param arg_list_id, arg_item_id
             List item whose associated URIs should be returned.
+
+        \param out_cookie
+            Data cookie.
+
         \param out_error_code
             The D-Bus method returns an error code to the caller. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
+
         \param out_uri_list
             An array of strings containing the URI the item refers to. In case
             the item is not associated with any URI (e.g., directory entries),
             an empty string is returned.
+
         \param out_image_stream_key
             Stream key for retrieval of cover art.
-        \param proxy, cancellable, error GDBus clutter.
 
-        \returns True on success, false on error.
+        \param proxy, cancellable, error
+            GDBus clutter.
+
+        \returns
+            True on success, false on error.
         -->
         <method name="GetURIs">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="uri_list" type="as" direction="out"/>
+            <arg name="image_stream_key" type="ay" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Lists.Navigation.GetURIs results.
+        -->
+        <method name="GetURIsByCookie">
+            <arg name="cookie" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="uri_list" type="as" direction="out"/>
             <arg name="image_stream_key" type="ay" direction="out">
@@ -335,24 +496,47 @@
 
         \param arg_list_id, arg_item_id
             List item whose associated URIs should be returned.
+
+        \param out_cookie
+            Data cookie.
+
         \param out_error_code
             The D-Bus method returns an error code to the caller. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
+
         \param out_link_list
             An array of triplets containing the rank (higher is better), the
             bit rate in bits per second, and the URI of the stream link. In
             case the item is not associated with any URI (e.g., directory
             entries), an empty array is returned.
+
         \param out_image_stream_key
             Stream key for retrieval of cover art.
-        \param proxy, cancellable, error GDBus clutter.
 
-        \returns True on success, false on error.
+        \param proxy, cancellable, error
+            GDBus clutter.
+
+        \returns
+            True on success, false on error.
         -->
         <method name="GetRankedStreamLinks">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="link_list" type="a(uus)" direction="out"/>
+            <arg name="image_stream_key" type="ay" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Lists.Navigation.GetRankedStreamLinks
+        results.
+        -->
+        <method name="GetRankedStreamLinksByCookie">
+            <arg name="cookie" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="link_list" type="a(uus)" direction="out"/>
             <arg name="image_stream_key" type="ay" direction="out">
@@ -381,17 +565,21 @@
 
         \param arg_list_ids
             Lists that whose garbage collection fate shall be deferred.
+
         \param out_list_expiry_ms
             Number of milliseconds the lists will be excluded from garbage
             collection. This number can be used as a basis for regular keep
             alive method invocations to keep lists around as long as needed. Do
             not use this number directly, but subtract some time to account
             for any latencies (using 80% of this value may be appropriate).
+
         \param out_invalid_list_ids
             In case any lists requested to keep alive are not known anymore,
             their IDs are returned here. Lists may have been removed due to
             memory pressure before their scheduled life time has expired.
-        \param proxy, cancellable, error GDBus clutter.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
         -->
         <method name="KeepAlive">
             <arg name="list_ids" type="au" direction="in"/>
@@ -494,6 +682,10 @@
 
         \param proxy, cancellable, error
             GDBus clutter.
+
+        \see
+            #tdbus_lists_navigation_call_get_location_trace(),
+            #tdbus_lists_navigation_call_realize_location()
         -->
         <method name="GetLocationKey">
             <arg name="list_id" type="u" direction="in"/>
@@ -536,6 +728,9 @@
             Reference point. If both values are zero, then a full trace to the
             root list is generated.
 
+        \param out_cookie
+            Data cookie in case \p out_error_code indicates no error.
+
         \param out_error_code
             The D-Bus method returns an error code to the caller. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
@@ -547,13 +742,26 @@
         \param proxy, cancellable, error
             GDBus clutter.
 
-        \see #tdbus_lists_navigation_call_realize_location()
+        \see
+            #tdbus_lists_navigation_call_get_location_trace_by_cookie(),
+            #tdbus_lists_navigation_call_get_location_key(),
+            #tdbus_lists_navigation_call_realize_location()
         -->
         <method name="GetLocationTrace">
             <arg name="list_id" type="u" direction="in"/>
             <arg name="item_id" type="u" direction="in"/>
             <arg name="ref_list_id" type="u" direction="in"/>
             <arg name="ref_item_id" type="u" direction="in"/>
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="location_trace" type="s" direction="out"/>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Lists.Navigation.GetLocationTrace results.
+        -->
+        <method name="GetLocationTraceByCookie">
+            <arg name="cookie" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="location_trace" type="s" direction="out"/>
         </method>
@@ -572,13 +780,13 @@
             A location key or location trace with protocol specification
             matching the list broker.
 
+        \param out_cookie
+            Data cookie in case \p out_error_code indicates no error.
+
         \param out_error_code
             The method may error out early with an error code. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
-
-        \param out_cookie
-            Data cookie in case \p out_error_code indicates no error.
 
         \param proxy, cancellable, error
             GDBus clutter.
@@ -590,8 +798,8 @@
         -->
         <method name="RealizeLocation">
             <arg name="location_url" type="s" direction="in"/>
-            <arg name="error_code" type="y" direction="out"/>
             <arg name="cookie" type="u" direction="out"/>
+            <arg name="error_code" type="y" direction="out"/>
         </method>
 
         <!--
