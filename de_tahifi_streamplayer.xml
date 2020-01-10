@@ -169,6 +169,7 @@
             </arg>
             <arg name="url" type="s"/>
             <arg name="url_fifo_is_full" type="b"/>
+            <arg name="dropped_ids" type="aq"/>
             <arg name="meta_data" type="a(ss)"/>
         </signal>
 
@@ -211,6 +212,7 @@
             <arg name="id" type="q"/>
             <arg name="url" type="s"/>
             <arg name="url_fifo_is_empty" type="b"/>
+            <arg name="dropped_ids" type="aq"/>
             <arg name="reason" type="s"/>
         </signal>
 
@@ -219,6 +221,7 @@
         -->
         <signal name="Stopped">
             <arg name="id" type="q"/>
+            <arg name="dropped_ids" type="aq"/>
         </signal>
 
         <!--
