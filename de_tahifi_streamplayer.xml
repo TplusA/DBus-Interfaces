@@ -156,6 +156,10 @@
             FIFO as a reaction to this signal should check this flag before
             trying to send new URLs to avoid needless D-Bus traffic.
 
+        \param arg_dropped_ids
+            An array of stream IDs dropped from the internal queue. Used for
+            synchronization between player control and player.
+
         \param arg_meta_data
             The meta data known so far as an unsorted array of key/value pairs.
 
@@ -200,6 +204,10 @@
             information to recover from a stopped stream player in a meaningful
             way (e.g., just try next queued stream, push the next entry from a
             playlist, or refrain from doing so).
+
+        \param arg_dropped_ids
+            An array of stream IDs dropped from the internal queue. Used for
+            synchronization between player control and player.
 
         \param arg_reason
             String ID of a reason why the stream failed playing. This string
