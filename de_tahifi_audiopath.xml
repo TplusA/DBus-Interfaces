@@ -5,15 +5,29 @@
         <!--
         Tell the daemon whether or not the appliance is ready for playback.
 
-        \param arg_state
-            Appliance's sound system state (0 = not ready, 1 = ready,
-            2 = unknown).
+        The ready-state is derived from the audio path state and the power
+        state. Note that these two states are independent of each other. It is
+        possible for an appliance to be in standby mode, but with a fully
+        configured audio path lingering in the background. Similarly, it may
+        also be powered on, but the audio path may not be ready yet.
+
+        The distinction is important because the daemon needs to know if an
+        audio source request can be deferred or if pending requests must be
+        canceled.
+
+        \param arg_audio_state
+            Appliance's sound system state (0 = unknown, 1 = not ready,
+            2 = ready).
+
+        \param arg_power_state
+            Appliance's power state (0 = unknown, 1 = suspended, 2 = powered).
 
         \param proxy, cancellable, error
             GDBus clutter.
         -->
         <method name="SetReadyState">
-            <arg name="state" type="y" direction="in"/>
+            <arg name="audio_state" type="y" direction="in"/>
+            <arg name="power_state" type="y" direction="in"/>
         </method>
 
         <!--
