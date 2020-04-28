@@ -90,11 +90,23 @@
 
         <!--
         Request changing volume control by given relative value.
+
+        \param arg_id
+            ID of the volume control.
+        \param arg_step
+            Number of steps the volume value should be changed.
+        \param arg_mute_request
+            The requested change of mute state.
+            0: No change requested.
+            1: Toggle mute state requested.
+            2: Set unmute state.
+            3: Set mute state.
+        \param proxy, cancellable, error GDBus clutter.
         -->
         <method name="SetRelative">
             <arg name="id" type="q" direction="in"/>
             <arg name="step" type="d" direction="in"/>
-            <arg name="is_muted" type="b" direction="in"/>
+            <arg name="mute_request" type="y" direction="in"/>
         </method>
 
         <!--
