@@ -131,12 +131,10 @@
         </method>
 
         <!--
-        Emitted when a stream has just started playing or continues playing.
+        Emitted when a new stream has just started playing.
 
-        This signal is emitted for both, newly started streams and streams that
-        continue playing from paused state. If necessary, the signal handler
-        can distinguish both cases by comparing the stream ID with the stream
-        ID sent with the preceding \c NowPlaying signal, if any.
+        This signal is emitted for newly started streams. Pause state is
+        communicated using the orthogonal \c PauseState signal.
 
         \param arg_id
             ID of the stream this signal refers to. The stream ID is a
@@ -233,10 +231,11 @@
         </signal>
 
         <!--
-        Emitted when a stream has just been paused (not stopped).
+        Emitted when a stream has just been paused (not stopped) or continued.
         -->
-        <signal name="Paused">
+        <signal name="PauseState">
             <arg name="id" type="q"/>
+            <arg name="is_paused" type="b"/>
         </signal>
 
         <!--
