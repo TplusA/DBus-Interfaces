@@ -315,5 +315,10 @@
             <arg name="repeat" type="s" direction="out"/>
             <arg name="shuffle" type="s" direction="out"/>
         </signal>
+
+        <signal name="Buffer">
+            <arg name="fill_level" type="y"/>
+            <arg name="cumulating" type="b"/>
+        </signal>
     </interface>
 </node>
