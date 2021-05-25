@@ -28,8 +28,8 @@
             GDBus clutter.
         -->
         <method name="GetAll">
-            <arg name="usbdevices" type="a(qsss)" direction="out"/>
-            <arg name="volumes" type="a(ussq)" direction="out"/>
+            <arg name="usbdevices" type="a(qssss)" direction="out"/>
+            <arg name="volumes" type="a(ussqs)" direction="out"/>
         </method>
 
         <!--
@@ -41,6 +41,10 @@
         \param arg_devname
             Name of the device as a human-readable string. This name is unique
             and may be used as an identifier (a pretty long one, though).
+
+        \param arg_uuid
+            UUID of the device. This may be used to recognize previously
+            plugged devices.
 
         \param arg_rootpath
             Path to a directory which contains all mountpoints of all
@@ -59,6 +63,7 @@
         <signal name="NewUSBDevice">
             <arg name="id" type="q"/>
             <arg name="devname" type="s"/>
+            <arg name="uuid" type="s"/>
             <arg name="rootpath" type="s"/>
             <arg name="usbport" type="s"/>
         </signal>
@@ -81,6 +86,10 @@
         \param arg_parent_id
             ID of the device this volume is stored on.
 
+        \param arg_uuid
+            UUID of the volume. This may be used to recognize previously
+            plugged devices.
+
         \param object
             GDBus clutter.
         -->
@@ -89,6 +98,7 @@
             <arg name="label" type="s"/>
             <arg name="mountpoint" type="s"/>
             <arg name="parent_id" type="q"/>
+            <arg name="uuid" type="s"/>
         </signal>
 
         <!--
