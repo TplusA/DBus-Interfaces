@@ -112,6 +112,9 @@
         \param arg_id
             Internal positive device ID.
 
+        \param arg_uuid
+            UUID of the device.
+
         \param arg_rootpath
             Path to the directory which contains all mountpoints for the
             device.
@@ -121,6 +124,7 @@
         -->
         <signal name="DeviceRemoved">
             <arg name="id" type="q"/>
+            <arg name="uuid" type="s"/>
             <arg name="rootpath" type="s"/>
         </signal>
 
@@ -129,6 +133,9 @@
 
         \param arg_id
             Internal positive device ID.
+
+        \param arg_uuid
+            UUID of the device.
 
         \param arg_rootpath
             Path to the directory which contains all mountpoints for the
@@ -139,6 +146,7 @@
         -->
         <signal name="DeviceWillBeRemoved">
             <arg name="id" type="q"/>
+            <arg name="uuid" type="s"/>
             <arg name="rootpath" type="s"/>
         </signal>
     </interface>
