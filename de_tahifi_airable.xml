@@ -127,5 +127,39 @@
             <arg name="error_code" type="y"/>
             <arg name="info" type="s"/>
         </signal>
+
+        <!--
+        Inform the system that OAuth login is requested by accessing a URL and
+        entering a code there.
+
+        The login will require a browser and some user interaction. Since this
+        is something we cannot handle inside the list broker and we don't know
+        which UI may handle the request, we emit the request as a signal and
+        rely on some process catching it.
+
+        \param arg_service_id
+            The service which requests OAuth authentication.
+
+        \param arg_context_hint, arg_list_id, arg_item_id
+            Some data for catchers of this signal to tell which access may have
+            triggered the authentication request.
+
+        \param arg_login_url
+            OAuth login URL as sent by Airable.
+
+        \param arg_login_code
+            OAuth access code as sent by Airable.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="ExternalOAuthLoginRequested">
+            <arg name="service_id" type="s"/>
+            <arg name="context_hint" type="s"/>
+            <arg name="list_id" type="u"/>
+            <arg name="item_id" type="u"/>
+            <arg name="login_url" type="s"/>
+            <arg name="login_code" type="s"/>
+        </signal>
     </interface>
 </node>
