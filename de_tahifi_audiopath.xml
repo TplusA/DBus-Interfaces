@@ -205,6 +205,23 @@
         </method>
 
         <!--
+        Retrieve current audio path.
+
+        This method returns quickly, so it is usually safe to call
+        synchronously.
+
+        \param out_source_id, out_player_id
+            The current path. Note that the path might be empty or incomplete.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="GetCurrentPath">
+            <arg name="source_id" type="s" direction="out"/>
+            <arg name="player_id" type="s" direction="out"/>
+        </method>
+
+        <!--
         Retrieve information about a registered player.
 
         This method returns quickly, so it is usually safe to call
