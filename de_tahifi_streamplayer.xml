@@ -24,6 +24,7 @@
             <arg name="stop_position" type="x" direction="in"/>
             <arg name="stop_units" type="s" direction="in"/>
             <arg name="keep_first_n_entries" type="n" direction="in"/>
+            <arg name="meta_data" type="a(ss)"/>
             <arg name="fifo_overflow" type="b" direction="out"/>
             <arg name="is_playing" type="b" direction="out"/>
         </method>
