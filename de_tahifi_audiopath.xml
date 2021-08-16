@@ -324,6 +324,30 @@
             <arg name="player_id" type="s"/>
             <arg name="request_data" type="a{sv}"/>
         </signal>
+
+        <!--
+        Signal emitted after an audio path has been activated again.
+
+        When the active audio path is requested again, then nothing really
+        happens. In this case, this signal is emitted to let every process in
+        the system know that the audio path has been selected again. The
+        primarily intention behind this is to propagate the extra request data
+        which have been passed to the request.
+
+        \param arg_source_id, arg_player_id
+            The active audio path.
+
+        \param arg_request_data
+            Possibly empty data passed to the audio source request.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="PathReactivated">
+            <arg name="source_id" type="s"/>
+            <arg name="player_id" type="s"/>
+            <arg name="request_data" type="a{sv}"/>
+        </signal>
     </interface>
 
     <interface name="de.tahifi.AudioPath.Source">
