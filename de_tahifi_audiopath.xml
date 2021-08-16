@@ -313,12 +313,16 @@
             empty player ID implies an empty source ID (but not the other way
             around).
 
+        \param arg_request_data
+            Possibly empty data passed to the audio source request.
+
         \param object
             GDBus clutter.
         -->
         <signal name="PathActivated">
             <arg name="source_id" type="s"/>
             <arg name="player_id" type="s"/>
+            <arg name="request_data" type="a{sv}"/>
         </signal>
     </interface>
 
