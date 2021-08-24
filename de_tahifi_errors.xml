@@ -1,0 +1,91 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/de/tahifi/errors">
+    <!--
+    Asynchronous error, warning, and information messages.
+
+    Errors emitted through this interface are information potentially of
+    interest to the user. Its primary purpose is to provide the user with
+    information about problems present in the system which they system itself
+    cannot solve. Specific examples are network problems, I/O errors, any
+    hardware trouble, and other things which will just happen without being
+    related to specific user actions.
+
+    This interface is not meant to be used for general error detection. The
+    various D-Bus interfaces have their own means of dealing with errors, and
+    these shall be used to detect and recover from errors.
+    -->
+    <interface name="de.tahifi.Errors">
+        <!--
+        Report some error of interest to the user.
+
+        Sending an error means that some significant condition has occurred
+        which the user should be made aware of. Error messages are always
+        presented to the user.
+
+        \param arg_code
+            An identifier for a specific error. When presenting the error to
+            the user, this code shall be used together with any data passed in
+            \p arg_context and \p arg_data to generate a useful error message.
+            Do not rely on \p arg_message to allow for internationalization.
+
+        \param arg_context
+            An optional context which details the error code.
+
+        \param arg_message
+            A clear text, English message briefly describing the error. This
+            message is meant for use in logs, debugging, and possibly as a
+            fallback in case the error code is not recognized. Note that \e any
+            kind of message is allowed here, and it may be different for
+            different error messages of the same error code. In general, it is
+            impossible to parse these messages or to translate them
+            automatically to other languages.
+
+        \param arg_data
+            Any data which could be necessary to make the generated error
+            message presented to the user as helpful as possible. The correct
+            interpretation of this field depends on the error code.
+
+        \param object
+            GDBus clutter.
+        -->
+        <signal name="Error">
+            <arg name="code" type="s"/>
+            <arg name="context" type="s"/>
+            <arg name="message" type="s"/>
+            <arg name="data" type="a{sv}"/>
+        </signal>
+
+        <!--
+        Report some warning message, potentially of interest to the user.
+
+        Warnings are like errors, but they might get filtered out or be
+        presented in much more subtle ways that error messages.
+
+        See \c de.tahifi.Errors.Error for parameters.
+        -->
+        <signal name="Warning">
+            <arg name="code" type="s"/>
+            <arg name="context" type="s"/>
+            <arg name="message" type="s"/>
+            <arg name="data" type="a{sv}"/>
+        </signal>
+
+        <!--
+        Report some information which might be of interest to the user.
+
+        Use this signal sparingly, if at all. Non-error information are usually
+        reported through interfaces specifically designed to transport certain
+        kinds of information. Information not intended for the user should
+        simply go to the log. No news is good news.
+
+        See \c de.tahifi.Errors.Error for parameters.
+        -->
+        <signal name="Info">
+            <arg name="code" type="s"/>
+            <arg name="context" type="s"/>
+            <arg name="message" type="s"/>
+            <arg name="data" type="a{sv}"/>
+        </signal>
+    </interface>
+</node>
