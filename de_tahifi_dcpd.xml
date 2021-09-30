@@ -49,22 +49,6 @@
             <arg name="title" type="s" direction="in"/>
             <arg name="url" type="s" direction="in"/>
         </method>
-
-        <!--
-        Post information about a single stream around.
-
-        This signal was introduced for playing streams from the smartphone app.
-        The user interface may have to know information about a stream in case
-        the stream itself does not contain any meta data.
-        -->
-        <signal name="StreamInfo">
-            <arg name="stream_id" type="q"/>
-            <arg name="artist" type="s"/>
-            <arg name="album" type="s"/>
-            <arg name="title" type="s"/>
-            <arg name="alttrack" type="s"/>
-            <arg name="url" type="s"/>
-        </signal>
     </interface>
 
     <interface name="de.tahifi.Dcpd.Views">
