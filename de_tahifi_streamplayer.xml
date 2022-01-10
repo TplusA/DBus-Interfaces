@@ -31,11 +31,15 @@
     </interface>
 
     <interface name="de.tahifi.Streamplayer.Playback">
-        <method name="Start"/>
+        <method name="Start">
+            <arg name="reason" type="s"/>
+        </method>
         <method name="Stop">
             <arg name="reason" type="s"/>
         </method>
-        <method name="Pause"/>
+        <method name="Pause">
+            <arg name="reason" type="s"/>
+        </method>
 
         <!--
         Set absolute stream position.
