@@ -31,6 +31,31 @@
             <arg name="fifo_overflow" type="b" direction="out"/>
             <arg name="is_playing" type="b" direction="out"/>
         </method>
+
+        <!--
+        Emitted when the player has removed a stream from the queue before it
+        started playing.
+
+        The player may probe all queued streams in the background while playing
+        some other stream. In case it finds out that a queued stream cannot be
+        played, it removes the stream and emits this signal.
+
+        This signal does not affect play state in any way. It is strictly
+        related to queue management. This means that all sorts of errors can
+        still be thrown for any playing stream.
+
+        \param arg_id
+            ID of the stream this signal refers to.
+
+        \param arg_reason
+            String ID of a reason why the stream was dropped. The possible
+            values are the same as those for the \p arg_reason parameter passed
+            to the \c de.tahifi.Streamplayer.Playback.StoppedWithError signal.
+        -->
+        <signal name="Dropped">
+            <arg name="id" type="q"/>
+            <arg name="reason" type="s"/>
+        </signal>
     </interface>
 
     <interface name="de.tahifi.Streamplayer.Playback">
