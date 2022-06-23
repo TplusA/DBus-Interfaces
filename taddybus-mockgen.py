@@ -107,6 +107,10 @@ def _type_is_string(param):
     return param.attrib['type'] in ('s', 'o')
 
 
+def _type_is_float(param):
+    return param.attrib['type'] == 'd'
+
+
 def _map_simple_type_to_cptrtype(typespec):
     dbus_type_to_ctype = {
         "b": "gboolean *",
@@ -306,6 +310,9 @@ def _mk_check_statements(params, is_method, *, need_return_types=False):
                 argname + ') == ' + argname + '_)')
             statements.append(
                 'else CHECK(' + argname + '_.empty())')
+        elif _type_is_float(param):
+            statements.append('CHECK(' + argname + ' <= ' + argname + '_)')
+            statements.append('CHECK(' + argname + ' >= ' + argname + '_)')
         else:
             statements.append('CHECK(' + argname + ' == ' + argname + '_)')
 
