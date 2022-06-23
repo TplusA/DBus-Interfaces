@@ -18,13 +18,16 @@
             <arg name="stream_url" type="s" direction="in"/>
             <arg name="stream_key" type="ay" direction="in">
                 <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+                <mock_check_fn name="MockDBusUtils::expect_byte_array"/>
             </arg>
             <arg name="start_position" type="x" direction="in"/>
             <arg name="start_units" type="s" direction="in"/>
             <arg name="stop_position" type="x" direction="in"/>
             <arg name="stop_units" type="s" direction="in"/>
             <arg name="keep_first_n_entries" type="n" direction="in"/>
-            <arg name="meta_data" type="a(ss)"/>
+            <arg name="meta_data" type="a(ss)">
+                <mock_check_fn name="MockDBusUtils::expect_meta_data"/>
+            </arg>
             <arg name="fifo_overflow" type="b" direction="out"/>
             <arg name="is_playing" type="b" direction="out"/>
         </method>
