@@ -111,6 +111,10 @@ def _type_is_float(param):
     return param.attrib['type'] == 'd'
 
 
+def _type_is_gvariant(param):
+    return param.attrib['type'][0] in ('v', 'a')
+
+
 def _map_simple_type_to_cptrtype(typespec):
     dbus_type_to_ctype = {
         "b": "gboolean *",
@@ -182,8 +186,8 @@ def _map_simple_type_to_memtype(typespec):
 
 def _map_simple_type_to_const_memtype(typespec):
     ctype = _map_simple_type_to_memtype(typespec)
-    if ctype:
-        ctype = 'const ' + ctype;
+    if ctype and typespec not in ('v', 'a'):
+        ctype = 'const ' + ctype
     return ctype
 
 
@@ -262,6 +266,27 @@ def _mk_initializer_list(params, is_method, *, need_return_types=False):
         argname = 'out_' if need_return_types else 'arg_'
         argname += param.attrib['name']
         statements.append(argname + '_(std::move(' + argname + '))')
+
+    return statements
+
+
+def _mk_cleanup_statements(params, is_method, *, need_return_types):
+    statements = []
+
+    for param in params.findall('arg'):
+        if _skip_parameter(param, is_method, need_return_types):
+            continue
+
+        if need_return_types and _type_is_pointer(param):
+            argname = 'out_' + param.attrib['name']
+            statements.append('if(' + argname + '_ != nullptr) '
+                              'g_variant_unref(' + argname + '_)')
+            statements.append(argname + '_ = nullptr')
+        elif not need_return_types and _type_is_gvariant(param):
+            argname = 'arg_' + param.attrib['name']
+            statements.append('if(' + argname + '_ != nullptr) '
+                              'g_variant_unref(' + argname + '_)')
+            statements.append(argname + '_ = nullptr')
 
     return statements
 
@@ -346,6 +371,10 @@ class {}: public Expectation
     explicit {}({}){}
     {{}}
 
+    ~{}()
+    {{""""""{}
+    }}
+
     void check({} *proxy, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data{})
     {{
         CHECK(proxy == proxy_pointer());
@@ -367,6 +396,8 @@ class {}: public Expectation
         'observed_async_ready_callback_(nullptr)',
         'observed_user_data_(nullptr)',
     ]
+    cleanup_statements = \
+        _mk_cleanup_statements(method, True, need_return_types=False)
     checks = _mk_check_statements(method, True)
     print(template_call.format(
             iface_name + '.' + method.attrib['name'], class_name,
@@ -376,6 +407,8 @@ class {}: public Expectation
             class_name,
             _format_string_list(ctor_args, 0, leading_indent=False),
             _format_string_list(ctor_init, 8, leading_sep=':'),
+            class_name,
+            _format_string_list(cleanup_statements, 8, terminator=';'),
             iface_type,
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
@@ -396,11 +429,8 @@ class {}: public Expectation
 
     ~{}()
     {{
-        if(dbus_call_error_ != nullptr)
-        {{
-            g_error_free(dbus_call_error_);
-            dbus_call_error_ = nullptr;
-        }}
+        if(dbus_call_error_ != nullptr) g_error_free(dbus_call_error_);
+        dbus_call_error_ = nullptr;{}
     }}
 
     gboolean check({} *proxy{}, GAsyncResult *res, GError **error)
@@ -433,6 +463,8 @@ class {}: public Expectation
     ctor_init += _mk_initializer_list(method, True,
                                       need_return_types=True)
     ctor_init += ['observed_async_result_(nullptr)']
+    cleanup_statements = \
+        _mk_cleanup_statements(method, True, need_return_types=True)
     checks = _mk_copy_statements(method, True, need_return_types=True)
     print(template_finish.format(
             iface_name + '.' + method.attrib['name'], class_name,
@@ -441,6 +473,7 @@ class {}: public Expectation
             _format_string_list(ctor_args, 0, leading_indent=False),
             _format_string_list(ctor_init, 8, leading_sep=':'),
             class_name,
+            _format_string_list(cleanup_statements, 8, terminator=';'),
             iface_type,
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
