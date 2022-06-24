@@ -383,6 +383,14 @@ class {}: public Expectation
         observed_async_ready_callback_ = callback;
         observed_user_data_ = user_data;{}
     }}
+
+    void async_ready()
+    {{
+        REQUIRE(observed_async_ready_callback_ != nullptr);
+        observed_async_ready_callback_(
+                    reinterpret_cast<GObject *>(proxy_pointer()),
+                    async_result_pointer(), observed_user_data_);
+    }}
 }};
 """
     class_name = method.attrib['name']
@@ -488,12 +496,12 @@ def _write_header_body(hhfile, iface_prefix, c_namespace, cpp_namespace,
 static constexpr unsigned long PROXY_POINTER_PATTERN = {};
 static constexpr unsigned long ASYNC_RESULT_PATTERN = {};
 
-static inline const auto *proxy_pointer()
+static inline auto *proxy_pointer()
 {{
     return reinterpret_cast<{} *>(PROXY_POINTER_PATTERN);
 }}
 
-static inline const GAsyncResult *async_result_pointer()
+static inline GAsyncResult *async_result_pointer()
 {{
     return reinterpret_cast<GAsyncResult *>(ASYNC_RESULT_PATTERN);
 }}
@@ -536,9 +544,9 @@ class Mock
     }}
 
     template <typename T, typename ... Args>
-    void expect(Args ... args)
+    T &expect(Args ... args)
     {{
-        expectations_.add(std::make_unique<T>(args...));
+        return *static_cast<T *>(expectations_.add(std::make_unique<T>(args...)));
     }}
 
     template <typename T>
@@ -566,9 +574,6 @@ class Mock
 
     template <typename T>
     const T &next(const char *caller) {{ return expectations_.next<T>(caller); }}
-
-    template <typename T>
-    const T &peek(size_t idx) {{ return expectations_.get<T>(idx); }}
 }};
 
 """
