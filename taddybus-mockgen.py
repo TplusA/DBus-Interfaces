@@ -353,7 +353,8 @@ def _mk_copy_statements(params, is_method, *, need_return_types=False):
 
         argname = 'out_' if need_return_types else 'arg_'
         argname += param.attrib['name']
-        statements.append('*' + argname + ' = ' + argname + '_')
+        statements.append('if(' + argname + ' != nullptr) *' + argname +
+                          ' = ' + argname + '_')
 
     return statements
 
