@@ -265,7 +265,12 @@ def _mk_initializer_list(params, is_method, *, need_return_types=False):
 
         argname = 'out_' if need_return_types else 'arg_'
         argname += param.attrib['name']
-        statements.append(argname + '_(std::move(' + argname + '))')
+
+        if _type_is_gvariant(param):
+            statements.append(argname + '_(std::move(g_variant_ref_sink(' +
+                              argname + ')))')
+        else:
+            statements.append(argname + '_(std::move(' + argname + '))')
 
     return statements
 
@@ -373,12 +378,16 @@ class {}: public Expectation
     {{}}
 
     ~{}()
-    {{""""""{}
+    {{
+        if(observed_cancellable_ != nullptr)
+            g_object_unref(observed_cancellable_);{}
     }}
 
     void check({} *proxy, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data{})
     {{
         CHECK(proxy == proxy_pointer());
+        if(cancellable != nullptr)
+            g_object_ref(cancellable);
         observed_cancellable_ = cancellable;
         observed_async_ready_callback_ = callback;
         observed_user_data_ = user_data;{}
