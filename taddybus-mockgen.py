@@ -374,7 +374,8 @@ class {}: public Expectation
     GAsyncReadyCallback observed_async_ready_callback_;
     gpointer observed_user_data_;
 
-    explicit {}({}){}
+    explicit {}({}):
+        Expectation("{}"){}
     {{}}
 
     ~{}()
@@ -424,7 +425,8 @@ class {}: public Expectation
             ('\n' if members else ''),
             class_name,
             _format_string_list(ctor_args, 0, leading_indent=False),
-            _format_string_list(ctor_init, 8, leading_sep=':'),
+            class_name,
+            _format_string_list(ctor_init, 8, leading_sep=','),
             class_name,
             _format_string_list(cleanup_statements, 8, terminator=';'),
             iface_type,
@@ -442,7 +444,8 @@ class {}: public Expectation
   public:
     GAsyncResult *observed_async_result_;
 
-    explicit {}({}){}
+    explicit {}({}):
+        Expectation("{}"){}
     {{}}
 
     ~{}()
@@ -489,7 +492,8 @@ class {}: public Expectation
             _format_string_list(members, 4, terminator=';'),
             class_name,
             _format_string_list(ctor_args, 0, leading_indent=False),
-            _format_string_list(ctor_init, 8, leading_sep=':'),
+            class_name,
+            _format_string_list(ctor_init, 8, leading_sep=','),
             class_name,
             _format_string_list(cleanup_statements, 8, terminator=';'),
             iface_type,
@@ -518,13 +522,23 @@ static inline GAsyncResult *async_result_pointer()
 /*! Base class for expectations. */
 class Expectation
 {{
+  private:
+    std::string name_;
+    unsigned int sequence_serial_;
+
   public:
     Expectation(const Expectation &) = delete;
     Expectation(Expectation &&) = default;
     Expectation &operator=(const Expectation &) = delete;
     Expectation &operator=(Expectation &&) = default;
-    Expectation() {{}}
+    Expectation(std::string &&name):
+        name_(std::move(name)),
+        sequence_serial_(std::numeric_limits<unsigned int>::max())
+    {{}}
     virtual ~Expectation() {{}}
+    const std::string &get_name() const {{ return name_; }}
+    void set_sequence_serial(unsigned int ss) {{ sequence_serial_ = ss; }}
+    unsigned int get_sequence_serial() const {{ return sequence_serial_; }}
 }};
 
 class Mock
