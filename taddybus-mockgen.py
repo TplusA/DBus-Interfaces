@@ -401,6 +401,13 @@ class {}: public Expectation
                     reinterpret_cast<GObject *>(proxy_pointer()),
                     async_result_pointer(), observed_user_data_);
     }}
+
+    void async_ready_ignored()
+    {{
+        REQUIRE(observed_async_ready_callback_ == nullptr);
+        REQUIRE(observed_user_data_ == nullptr);
+        REQUIRE(observed_cancellable_ == nullptr);
+    }}
 }};
 """
     class_name = method.attrib['name']
