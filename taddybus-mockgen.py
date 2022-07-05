@@ -211,14 +211,19 @@ def _skip_parameter(param, is_method, need_return_types):
 
 
 def _mk_argument_list(params, is_method, mapping_fn, *,
-                      need_return_types=False, append_to_name=''):
+                      need_return_types=False, append_to_name='',
+                      need_prefixed_names=True):
     args = []
 
     for param in params.findall('arg'):
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
-        argname = 'out_' if need_return_types else 'arg_'
+        if need_prefixed_names:
+            argname = 'out_' if need_return_types else 'arg_'
+        else:
+            argname = ''
+
         argname += param.attrib['name'] + append_to_name
         type = None
 
@@ -264,14 +269,19 @@ def _format_string_list(args, indent=0, *,
     return result
 
 
-def _mk_initializer_list(params, is_method, *, need_return_types=False):
+def _mk_initializer_list(params, is_method, *, need_return_types=False,
+                         need_prefixed_names=True):
     statements = []
 
     for param in params.findall('arg'):
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
-        argname = 'out_' if need_return_types else 'arg_'
+        if need_prefixed_names:
+            argname = 'out_' if need_return_types else 'arg_'
+        else:
+            argname = ''
+
         argname += param.attrib['name']
 
         if _type_is_gvariant(param):
@@ -283,20 +293,30 @@ def _mk_initializer_list(params, is_method, *, need_return_types=False):
     return statements
 
 
-def _mk_cleanup_statements(params, is_method, *, need_return_types):
+def _mk_cleanup_statements(params, is_method, *, need_return_types,
+                           need_prefixed_names=True):
     statements = []
 
     for param in params.findall('arg'):
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
-        if need_return_types and _type_is_pointer(param):
-            argname = 'out_' + param.attrib['name']
+        if need_return_types and _type_is_pointer(param) and \
+                not _type_is_string(param):
+            if need_prefixed_names:
+                argname = 'out_' + param.attrib['name']
+            else:
+                argname = param.attrib['name']
+
             statements.append('if(' + argname + '_ != nullptr) '
                               'g_variant_unref(' + argname + '_)')
             statements.append(argname + '_ = nullptr')
         elif not need_return_types and _type_is_gvariant(param):
-            argname = 'arg_' + param.attrib['name']
+            if need_prefixed_names:
+                argname = 'arg_' + param.attrib['name']
+            else:
+                argname = param.attrib['name']
+
             statements.append('if(' + argname + '_ != nullptr) '
                               'g_variant_unref(' + argname + '_)')
             statements.append(argname + '_ = nullptr')
@@ -304,14 +324,19 @@ def _mk_cleanup_statements(params, is_method, *, need_return_types):
     return statements
 
 
-def _mk_check_statements(params, is_method, *, need_return_types=False):
+def _mk_check_statements(params, is_method, *, need_return_types=False,
+                         need_prefixed_names=True):
     statements = []
 
     for param in params.findall('arg'):
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
-        argname = 'out_' if need_return_types else 'arg_'
+        if need_prefixed_names:
+            argname = 'out_' if need_return_types else 'arg_'
+        else:
+            argname = ''
+
         argname += param.attrib['name']
 
         if _type_is_pointer(param):
@@ -357,14 +382,19 @@ def _mk_check_statements(params, is_method, *, need_return_types=False):
     return statements
 
 
-def _mk_copy_statements(params, is_method, *, need_return_types=False):
+def _mk_copy_statements(params, is_method, *, need_return_types=False,
+                        need_prefixed_names=True):
     statements = []
 
     for param in params.findall('arg'):
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
-        argname = 'out_' if need_return_types else 'arg_'
+        if need_prefixed_names:
+            argname = 'out_' if need_return_types else 'arg_'
+        else:
+            argname = ''
+
         argname += param.attrib['name']
         if _type_is_string(param):
             statements.append('*' + argname +
@@ -521,12 +551,66 @@ class {}: public Expectation
             _format_string_list(checks, 8, terminator=';')),
           file=hhfile)
 
+    template_complete = """// Expecting async method completion: {}
+class {}: public Expectation
+{{
+  private:{}
+
+  public:
+    explicit {}({}):
+        Expectation("{}"){}
+    {{}}
+
+    ~{}()
+    {{""""""{}
+    }}
+
+    void check({} *object, GDBusMethodInvocation *invocation{})
+    {{
+        CHECK(object == proxy_pointer());
+        CHECK(invocation == invocation_pointer());{}
+    }}
+}};
+"""
+    class_name = method.attrib['name'] + 'Complete'
+    members = _mk_argument_list(method, True, _map_simple_type_to_memtype,
+                                need_return_types=True, append_to_name='_',
+                                need_prefixed_names=False)
+    ctor_args = _mk_argument_list(method, True, _map_simple_type_to_ctortype,
+                                  need_return_types=True,
+                                  need_prefixed_names=False)
+    ctor_init = _mk_initializer_list(method, True, need_return_types=True,
+                                     need_prefixed_names=False)
+    cleanup_statements = \
+        _mk_cleanup_statements(method, True, need_return_types=True,
+                               need_prefixed_names=False)
+    check_args = _mk_argument_list(method, True, _map_simple_type_to_ctype,
+                                   need_return_types=True,
+                                   need_prefixed_names=False)
+    checks = _mk_check_statements(method, True, need_return_types=True,
+                                  need_prefixed_names=False)
+    print(template_complete.format(
+            iface_name + '.' + method.attrib['name'], class_name,
+            _format_string_list(members, 4, terminator=';'),
+            class_name,
+            _format_string_list(ctor_args, 0, leading_indent=False),
+            class_name,
+            _format_string_list(ctor_init, 8, leading_sep=','),
+            class_name,
+            _format_string_list(cleanup_statements, 8, terminator=';'),
+            iface_type,
+            _format_string_list(check_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(checks, 8, terminator=';')),
+          file=hhfile)
+
 
 def _write_header_body(hhfile, iface_prefix, c_namespace, cpp_namespace,
                        dummy_pointer_value, iface):
     template = """
 static constexpr unsigned long PROXY_POINTER_PATTERN = {};
 static constexpr unsigned long ASYNC_RESULT_PATTERN = {};
+static constexpr unsigned long METHOD_INVOCATION_PATTERN = {};
 
 static inline auto *proxy_pointer()
 {{
@@ -536,6 +620,11 @@ static inline auto *proxy_pointer()
 static inline GAsyncResult *async_result_pointer()
 {{
     return reinterpret_cast<GAsyncResult *>(ASYNC_RESULT_PATTERN);
+}}
+
+static inline GDBusMethodInvocation *invocation_pointer()
+{{
+    return reinterpret_cast<GDBusMethodInvocation *>(METHOD_INVOCATION_PATTERN);
 }}
 
 /*! Base class for expectations. */
@@ -624,6 +713,7 @@ class Mock
     iface_type = c_namespace.replace('_', '') + iface_name_stripped
     print(template.format(dummy_pointer_value,
                           hex(int(dummy_pointer_value, 0) + 1),
+                          hex(int(dummy_pointer_value, 0) + 2),
                           iface_type, cpp_namespace),
           file=hhfile)
 
@@ -650,14 +740,19 @@ def _write_impl_top(ccfile, mock_header_name):
     print(template.format(mock_header_name), file=ccfile)
 
 
-def _mk_call_parameter_list(params, is_method, *, need_return_types=False):
+def _mk_call_parameter_list(params, is_method, *, need_return_types=False,
+                            need_prefixed_names=True):
     names = []
 
     for param in params.findall('arg'):
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
-        argname = 'out_' if need_return_types else 'arg_'
+        if need_prefixed_names:
+            argname = 'out_' if need_return_types else 'arg_'
+        else:
+            argname = ''
+
         argname += param.attrib['name']
         names.append(argname)
 
@@ -707,6 +802,33 @@ gboolean {}({} *proxy{}, GAsyncResult *res, GError **error)
             cpp_namespace, cpp_namespace, cpp_namespace, cpp_namespace,
             method.attrib['name'] + 'Finish',
             _format_string_list(finish_forward_args, 0,
+                                leading_sep=', ', leading_indent=False)),
+          file=ccfile)
+
+    template = """
+void {}({} *object, GDBusMethodInvocation *invocation{})
+{{
+    REQUIRE({}::singleton != nullptr);
+    REQUIRE(object == {}::proxy_pointer());
+    return {}::singleton->check_next<{}::{}>(object, invocation{});
+}}
+"""
+    complete_fn_args = _mk_argument_list(method, True,
+                                         _map_simple_type_to_ctype,
+                                         need_return_types=True,
+                                         need_prefixed_names=False)
+    complete_forward_args = _mk_call_parameter_list(method, True,
+                                                    need_return_types=True,
+                                                    need_prefixed_names=False)
+    print(template.format(
+            _method_name(fn_prefix,
+                         'complete_' + _to_snake_case(method.attrib['name'])),
+            iface_type,
+            _format_string_list(complete_fn_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            cpp_namespace, cpp_namespace, cpp_namespace, cpp_namespace,
+            method.attrib['name'] + 'Complete',
+            _format_string_list(complete_forward_args, 0,
                                 leading_sep=', ', leading_indent=False)),
           file=ccfile)
 
