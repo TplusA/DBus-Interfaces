@@ -129,9 +129,9 @@ def _map_simple_type_to_cptrtype(typespec):
         "d": "gdouble *",
         "i": "gint *",
         "n": "gint16 *",
-        "o": "GVariant **",
+        "o": "gchar **",
         "q": "guint16 *",
-        "s": "GVariant **",
+        "s": "gchar **",
         "t": "guint64 *",
         "u": "guint *",
         "v": "GVariant **",
@@ -366,8 +366,12 @@ def _mk_copy_statements(params, is_method, *, need_return_types=False):
 
         argname = 'out_' if need_return_types else 'arg_'
         argname += param.attrib['name']
-        statements.append('if(' + argname + ' != nullptr) *' + argname +
-                          ' = ' + argname + '_')
+        if _type_is_string(param):
+            statements.append('*' + argname +
+                              ' = g_strdup(' + argname + '_.c_str())')
+        else:
+            statements.append('if(' + argname + ' != nullptr) *' + argname +
+                              ' = ' + argname + '_')
 
     return statements
 
