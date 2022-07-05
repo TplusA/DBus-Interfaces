@@ -257,6 +257,14 @@ struct SignalHandlerTraits<{}>
           file=hhfile)
 
 
+if sys.version_info >= (3, 9, 0):
+    def _remove_prefix(s, p):
+        return s.removeprefix(p)
+else:
+    def _remove_prefix(s, p):
+        return s[len(p):] if s.startswith(p) else s
+
+
 def _write_interface_code(hhfile, iface, iface_prefix, method_traits_prefix,
                           signal_traits_prefix, c_namespace):
     template = """
@@ -280,7 +288,7 @@ struct ProxyTraits<{}>
 }};
 """
     iface_name = iface.attrib['name']
-    iface_name_stripped = iface_name.lstrip(iface_prefix)
+    iface_name_stripped = _remove_prefix(iface_name, iface_prefix)
     iface_type = c_namespace.replace('_', '') + iface_name_stripped
     fn_prefix = c_namespace + '_' + _to_snake_case(iface_name_stripped)
     print(template.format(iface_name, iface_type, iface_type,

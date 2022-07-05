@@ -28,6 +28,14 @@ import sys
 import re
 
 
+if sys.version_info >= (3, 9, 0):
+    def _remove_prefix(s, p):
+        return s.removeprefix(p)
+else:
+    def _remove_prefix(s, p):
+        return s[len(p):] if s.startswith(p) else s
+
+
 def _mk_include_guard(options):
     if options['include_guard']:
         return options['include_guard']
@@ -608,7 +616,7 @@ class Mock
 
 """
     iface_name = iface.attrib['name']
-    iface_name_stripped = iface_name.lstrip(iface_prefix)
+    iface_name_stripped = _remove_prefix(iface_name, iface_prefix)
     iface_type = c_namespace.replace('_', '') + iface_name_stripped
     print(template.format(dummy_pointer_value,
                           hex(int(dummy_pointer_value, 0) + 1),
@@ -712,7 +720,7 @@ TDBus::Proxy<{}> &TDBus::get_singleton()
 
 {}::Mock *{}::singleton = nullptr;"""
     iface_name = iface.attrib['name']
-    iface_name_stripped = iface_name.lstrip(iface_prefix)
+    iface_name_stripped = _remove_prefix(iface_name, iface_prefix)
     iface_type = c_namespace.replace('_', '') + iface_name_stripped
     dbus_name = 'unittests.' + iface_name
     print(template.format(
