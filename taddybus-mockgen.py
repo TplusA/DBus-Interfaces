@@ -413,14 +413,18 @@ def _write_method_call_expectation(hhfile, iface_name, iface_name_stripped,
                                    iface_type, method):
     template_call = """// Expecting async method call: {}
 class {}: public Expectation
-{{""""""{}{}
+{{""""""
+  private:
+    bool async_ready_ignored_;{}
+
   public:
     GCancellable *observed_cancellable_;
     GAsyncReadyCallback observed_async_ready_callback_;
     gpointer observed_user_data_;
 
     explicit {}({}):
-        Expectation("{}"){}
+        Expectation("{}"),
+        async_ready_ignored_(false){}
     {{}}
 
     ~{}()
@@ -437,6 +441,18 @@ class {}: public Expectation
         observed_cancellable_ = cancellable;
         observed_async_ready_callback_ = callback;
         observed_user_data_ = user_data;{}
+
+        if(async_ready_ignored_)
+        {{
+            CHECK(observed_async_ready_callback_ == nullptr);
+            CHECK(observed_user_data_ == nullptr);
+            CHECK(observed_cancellable_ == nullptr);
+        }}
+        else
+        {{
+            CHECK(observed_async_ready_callback_ != nullptr);
+            CHECK(observed_cancellable_ != nullptr);
+        }}
     }}
 
     void async_ready()
@@ -449,9 +465,7 @@ class {}: public Expectation
 
     void async_ready_ignored()
     {{
-        REQUIRE(observed_async_ready_callback_ == nullptr);
-        REQUIRE(observed_user_data_ == nullptr);
-        REQUIRE(observed_cancellable_ == nullptr);
+        async_ready_ignored_ = true;
     }}
 }};
 """
@@ -472,9 +486,7 @@ class {}: public Expectation
     checks = _mk_check_statements(method, True)
     print(template_call.format(
             iface_name + '.' + method.attrib['name'], class_name,
-            '\n  private:' if members else '',
-            _format_string_list(members, 4, terminator=';') +
-            ('\n' if members else ''),
+            _format_string_list(members, 4, terminator=';'),
             class_name,
             _format_string_list(ctor_args, 0, leading_indent=False),
             class_name,
