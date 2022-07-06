@@ -399,6 +399,9 @@ def _mk_copy_statements(params, is_method, *, need_return_types=False,
         if _type_is_string(param):
             statements.append('*' + argname +
                               ' = g_strdup(' + argname + '_.c_str())')
+        elif _type_is_gvariant(param):
+            statements.append('if(' + argname + ' != nullptr) *' + argname +
+                              ' = g_variant_ref(' + argname + '_)')
         else:
             statements.append('if(' + argname + ' != nullptr) *' + argname +
                               ' = ' + argname + '_')
