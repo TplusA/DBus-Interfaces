@@ -51,6 +51,9 @@
             String ID of a reason why the stream was dropped. The possible
             values are the same as those for the \p arg_reason parameter passed
             to the \c de.tahifi.Streamplayer.Playback.StoppedWithError signal.
+
+        \param object
+            GDBus clutter.
         -->
         <signal name="Dropped">
             <arg name="id" type="q"/>
