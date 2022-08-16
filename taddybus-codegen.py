@@ -162,6 +162,11 @@ struct MethodHandlerTraits<{}>
                  GDBusMethodInvocation *const invocation,{}
                  UserData<UserDataT...> *const d);
 
+    using ClassicHandlerType =
+        gboolean(IfaceType *const object,
+                 GDBusMethodInvocation *const invocation,{}
+                 gpointer);
+
     /*!
      * Handler for this D-Bus method.
      *
@@ -185,6 +190,7 @@ struct MethodHandlerTraits<{}>
                                   method_type, method_type, method_type,
                                   iface_type,
                                   _to_snake_case(method.attrib['name'], '-'),
+                                  _format_argument_list(args, 17),
                                   _format_argument_list(args, 17),
                                   _format_argument_list(args, 12),
                                   complete_fn_name),
@@ -234,6 +240,10 @@ struct SignalHandlerTraits<{}>
         void(IfaceType *const object,{}
              UserData<UserDataT...> *const d);
 
+    using ClassicHandlerType =
+        void(IfaceType *const object,{}
+             gpointer);
+
     /*!
      * Handler for this D-Bus signal.
      *
@@ -252,6 +262,7 @@ struct SignalHandlerTraits<{}>
                           signal_type, signal_type, signal_type,
                           iface_type,
                           _to_snake_case(signal.attrib['name'], '-'),
+                          _format_argument_list(args, 13),
                           _format_argument_list(args, 13),
                           _format_argument_list(args, 12)),
           file=hhfile)
