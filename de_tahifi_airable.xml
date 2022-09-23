@@ -14,18 +14,36 @@
 
         \param arg_redirect
             URL of an Airable redirect.
+        \param out_cookie
+            Data cookie in case \p out_error_code indicates no error.
         \param out_error_code
             The D-Bus method returns an error code to the caller. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
         \param out_url
             The URL the redirect points to.
-        \param proxy, cancellable, error GDBus clutter.
+        \param out_ev_seconds
+            The duration in seconds the returned URL is expected to be valid.
+            If the URL is expected to never expire, this value will be 0.
+        \param proxy, cancellable, error
+            GDBus clutter.
         -->
         <method name="ResolveRedirect">
             <arg name="redirect" type="s" direction="in"/>
+            <arg name="cookie" type="u" direction="out"/>
             <arg name="error_code" type="y" direction="out"/>
             <arg name="url" type="s" direction="out"/>
+            <arg name="ev_seconds" type="u" direction="out"/>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Airable.ResolveRedirect results.
+        -->
+        <method name="ResolveRedirectByCookie">
+            <arg name="cookie" type="u" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="url" type="s" direction="out"/>
+            <arg name="ev_seconds" type="u" direction="out"/>
         </method>
 
         <!--
@@ -160,6 +178,47 @@
             <arg name="item_id" type="u"/>
             <arg name="login_url" type="s"/>
             <arg name="login_code" type="s"/>
+        </signal>
+
+        <!--
+        Explicitly abort the data retrieval for given cookies.
+
+        \param arg_cookies
+            An array of pairs of cookie and flag. The flag tells the list
+            broker whether or not to keep the result in case the operation
+            which generated the result has completed successfully. True means
+            that the result should be kept around so that retrieval is still
+            possible (avoids undesired effects of certain race conditions),
+            false means that the result should be dropped in any case (if the
+            caller is not interested in the result anymore).
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="DataAbort">
+            <arg name="cookies" type="a(ub)" direction="in"/>
+        </method>
+
+        <!--
+        Report availability of requested data.
+
+        Multiple requests may complete at roughly the same time, and their
+        completion may be collectively reported in a single signal. The data
+        cookies may be used to retrieve the associated results.
+        -->
+        <signal name="DataAvailable">
+            <arg name="cookies" type="au"/>
+        </signal>
+
+        <!--
+        Report error for requested data.
+
+        Multiple requests may error out at roughly the same time (think network
+        trouble), and their errors may be collectively reported in a single
+        signal. The data cookies sent along are invalidated by this signal.
+        -->
+        <signal name="DataError">
+            <arg name="errors" type="a(uy)"/>
         </signal>
     </interface>
 </node>
