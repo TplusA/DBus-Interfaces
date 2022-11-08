@@ -200,6 +200,7 @@ struct MethodHandlerTraits<{}>
 struct MethodCallerTraits<{}>
 {{
     using IfaceType = {};
+    static constexpr auto invoke_sync = {};
     static constexpr auto invoke = {};
     static constexpr auto finish = {};
 }};
@@ -212,6 +213,7 @@ struct MethodCallerTraits<{}>
                      'call_' + _to_snake_case(method.attrib['name']) +
                      '_finish')
     print(caller_template.format(method_type, iface_type,
+                                 invoke_fn_name + '_sync',
                                  invoke_fn_name, finish_fn_name),
           file=hhfile)
 

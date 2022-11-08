@@ -470,9 +470,9 @@ class {}: public Expectation
 }};
 """
     class_name = method.attrib['name']
-    members = _mk_argument_list(method, True,
-                                _map_simple_type_to_const_memtype,
-                                append_to_name='_')
+    members_async = _mk_argument_list(method, True,
+                                      _map_simple_type_to_const_memtype,
+                                      append_to_name='_')
     ctor_args = _mk_argument_list(method, True, _map_simple_type_to_ctortype)
     check_args = _mk_argument_list(method, True, _map_simple_type_to_ctype)
     ctor_init = _mk_initializer_list(method, True)
@@ -486,7 +486,7 @@ class {}: public Expectation
     checks = _mk_check_statements(method, True)
     print(template_call.format(
             iface_name + '.' + method.attrib['name'], class_name,
-            _format_string_list(members, 4, terminator=';'),
+            _format_string_list(members_async, 4, terminator=';'),
             class_name,
             _format_string_list(ctor_args, 0, leading_indent=False),
             class_name,
@@ -537,8 +537,10 @@ class {}: public Expectation
 }};
 """
     class_name = method.attrib['name'] + 'Finish'
-    members = _mk_argument_list(method, True, _map_simple_type_to_memtype,
-                                need_return_types=True, append_to_name='_')
+    members_finish = _mk_argument_list(method, True,
+                                       _map_simple_type_to_memtype,
+                                       need_return_types=True,
+                                       append_to_name='_')
     ctor_args = ['GError *dbus_call_error']
     ctor_args += _mk_argument_list(method, True, _map_simple_type_to_ctortype,
                                    need_return_types=True)
@@ -553,7 +555,81 @@ class {}: public Expectation
     checks = _mk_copy_statements(method, True, need_return_types=True)
     print(template_finish.format(
             iface_name + '.' + method.attrib['name'], class_name,
-            _format_string_list(members, 4, terminator=';'),
+            _format_string_list(members_finish, 4, terminator=';'),
+            class_name,
+            _format_string_list(ctor_args, 0, leading_indent=False),
+            class_name,
+            _format_string_list(ctor_init, 8, leading_sep=','),
+            class_name,
+            _format_string_list(cleanup_statements, 8, terminator=';'),
+            iface_type,
+            _format_string_list(check_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(checks, 8, terminator=';')),
+          file=hhfile)
+
+    template_sync = """// Expecting sync method invocation: {}
+class {}: public Expectation
+{{
+  private:
+    GError *dbus_call_error_;{}{}
+
+  public:
+    GCancellable *observed_cancellable_;
+
+    explicit {}({}):
+        Expectation("{}"){}
+    {{}}
+
+    ~{}()
+    {{
+        if(observed_cancellable_ != nullptr)
+            g_object_unref(observed_cancellable_);
+        if(dbus_call_error_ != nullptr) g_error_free(dbus_call_error_);
+        dbus_call_error_ = nullptr;{}
+    }}
+
+    gboolean check({} *proxy{}, GCancellable *cancellable, GError **error)
+    {{
+        CHECK(proxy == proxy_pointer());
+        if(cancellable != nullptr)
+            g_object_ref(cancellable);
+        observed_cancellable_ = cancellable;
+
+        if(dbus_call_error_ != nullptr)
+        {{
+            *error = dbus_call_error_;
+            dbus_call_error_ = nullptr;
+            return FALSE;
+        }}
+{}
+        *error = nullptr;
+        return TRUE;
+    }}
+}};
+"""
+    class_name = method.attrib['name'] + 'Sync'
+    ctor_args = ['GError *dbus_call_error']
+    ctor_args += _mk_argument_list(method, True, _map_simple_type_to_ctortype)
+    ctor_args += _mk_argument_list(method, True, _map_simple_type_to_ctortype,
+                                   need_return_types=True)
+    ctor_init = ['dbus_call_error_(std::move(dbus_call_error))']
+    ctor_init += _mk_initializer_list(method, True)
+    ctor_init += _mk_initializer_list(method, True, need_return_types=True)
+    ctor_init += ['observed_cancellable_(nullptr)']
+    check_args = _mk_argument_list(method, True, _map_simple_type_to_ctype)
+    check_args += _mk_argument_list(method, True, _map_simple_type_to_cptrtype,
+                                    need_return_types=True)
+    cleanup_statements = \
+        _mk_cleanup_statements(method, True, need_return_types=False)
+    cleanup_statements += \
+        _mk_cleanup_statements(method, True, need_return_types=True)
+    checks = _mk_check_statements(method, True)
+    checks += _mk_copy_statements(method, True, need_return_types=True)
+    print(template_sync.format(
+            iface_name + '.' + method.attrib['name'], class_name,
+            _format_string_list(members_async, 4, terminator=';'),
+            _format_string_list(members_finish, 4, terminator=';'),
             class_name,
             _format_string_list(ctor_args, 0, leading_indent=False),
             class_name,
@@ -588,9 +664,11 @@ class {}: public Expectation
 }};
 """
     class_name = method.attrib['name'] + 'Complete'
-    members = _mk_argument_list(method, True, _map_simple_type_to_memtype,
-                                need_return_types=True, append_to_name='_',
-                                need_prefixed_names=False)
+    members_complete = _mk_argument_list(method, True,
+                                         _map_simple_type_to_memtype,
+                                         need_return_types=True,
+                                         append_to_name='_',
+                                         need_prefixed_names=False)
     ctor_args = _mk_argument_list(method, True, _map_simple_type_to_ctortype,
                                   need_return_types=True,
                                   need_prefixed_names=False)
@@ -606,7 +684,7 @@ class {}: public Expectation
                                   need_prefixed_names=False)
     print(template_complete.format(
             iface_name + '.' + method.attrib['name'], class_name,
-            _format_string_list(members, 4, terminator=';'),
+            _format_string_list(members_complete, 4, terminator=';'),
             class_name,
             _format_string_list(ctor_args, 0, leading_indent=False),
             class_name,
@@ -816,6 +894,30 @@ gboolean {}({} *proxy{}, GAsyncResult *res, GError **error)
                                 leading_sep=', ', leading_indent=False),
             cpp_namespace, cpp_namespace, cpp_namespace, cpp_namespace,
             method.attrib['name'] + 'Finish',
+            _format_string_list(finish_forward_args, 0,
+                                leading_sep=', ', leading_indent=False)),
+          file=ccfile)
+
+    template = """
+gboolean {}({} *proxy{}{}, GCancellable *cancellable, GError **error)
+{{
+    REQUIRE({}::singleton != nullptr);
+    return {}::singleton->check_next<{}::{}>(proxy{}{}, cancellable, error);
+}}"""
+
+    print(template.format(
+            _method_name(fn_prefix,
+                         'call_' + _to_snake_case(method.attrib['name']) +
+                         '_sync'),
+            iface_type,
+            _format_string_list(call_fn_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(finish_fn_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            cpp_namespace, cpp_namespace, cpp_namespace,
+            method.attrib['name'] + 'Sync',
+            _format_string_list(call_forward_args, 0,
+                                leading_sep=', ', leading_indent=False),
             _format_string_list(finish_forward_args, 0,
                                 leading_sep=', ', leading_indent=False)),
           file=ccfile)
