@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2017, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2017, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of T+A Streaming Board D-Bus interfaces (T+A-D-Bus).
  *
@@ -22,7 +22,7 @@
 #ifndef DE_TAHIFI_LISTS_ERRORS_HH
 #define DE_TAHIFI_LISTS_ERRORS_HH
 
-#include <inttypes.h>
+#include <cinttypes>
 
 class ListError
 {
@@ -79,7 +79,7 @@ class ListError
         "NOT_FOUND",
     };
 
-    static_assert(sizeof(names_) / sizeof(names_[0]) == static_cast<size_t>(ListError::Code::LAST_ERROR_CODE) + 1U,
+    static_assert(sizeof(names_) / sizeof(names_[0]) == static_cast<std::size_t>(ListError::Code::LAST_ERROR_CODE) + 1U,
                   "Mismatch between error codes enum and error strings");
 
     Code error_code_;
