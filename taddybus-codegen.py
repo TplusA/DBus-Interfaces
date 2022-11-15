@@ -151,6 +151,8 @@ struct MethodHandlerTraits<{}>
   public:
     using IfaceType = {};
 
+    static const char *method_type_name() {{ return "{}"; }}
+    static const char *dbus_method_name() {{ return "{}.{}"; }}
     static const char *glib_signal_name() {{ return "handle-{}"; }}
 
     template <typename... UserDataT>
@@ -188,7 +190,8 @@ struct MethodHandlerTraits<{}>
                      'complete_' + _to_snake_case(method.attrib['name']))
     print(handler_template.format(iface_name, method.attrib['name'],
                                   method_type, method_type, method_type,
-                                  iface_type,
+                                  iface_type, method_type,
+                                  iface_name, method.attrib['name'],
                                   _to_snake_case(method.attrib['name'], '-'),
                                   _format_argument_list(args, 17),
                                   _format_argument_list(args, 17),
@@ -232,6 +235,8 @@ struct SignalHandlerTraits<{}>
   public:
     using IfaceType = {};
 
+    static const char *signal_type_name() {{ return "{}"; }}
+    static const char *dbus_signal_name() {{ return "{}.{}"; }}
     static const char *glib_signal_name() {{ return "{}"; }}
 
     template <typename... UserDataT>
@@ -262,7 +267,8 @@ struct SignalHandlerTraits<{}>
     args = _mk_c_argument_list(signal, False)
     print(template.format(iface_name, signal.attrib['name'],
                           signal_type, signal_type, signal_type,
-                          iface_type,
+                          iface_type, signal_type,
+                          iface_name, signal.attrib['name'],
                           _to_snake_case(signal.attrib['name'], '-'),
                           _format_argument_list(args, 13),
                           _format_argument_list(args, 13),
