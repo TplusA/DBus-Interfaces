@@ -356,5 +356,10 @@
             <arg name="fill_level" type="y"/>
             <arg name="cumulating" type="b"/>
         </signal>
+
+        <method name="InjectStreamFailure">
+            <arg name="domain" type="s" direction="in"/>
+            <arg name="code" type="u" direction="in"/>
+        </method>
     </interface>
 </node>
