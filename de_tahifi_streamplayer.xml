@@ -13,6 +13,45 @@
             <arg name="next_id" type="u" direction="out"/>
             <arg name="play_status" type="y" direction="out"/>
         </method>
+
+        <!--
+        Append stream to player's internal queue.
+
+        \param arg_stream_id
+            ID of the stream.
+
+        \param arg_stream_url
+            The URI of the stream.
+
+        \param arg_stream_key
+            Stream key, a stable identifier for the stream (primarily used for
+            the cover art cache).
+
+        \param arg_start_position, arg_start_units, arg_stop_position, arg_stop_units
+            At which timestamp to start and stop playing. Not all audio sources
+            support seeking, in which case these parameters will be ignored.
+
+        \param arg_keep_first_n_entries
+            How many items to keep in the queue. If set to 0, then the whole
+            queue will be cleared before adding the new stream. If set to -1,
+            the queue will remain untouched.
+
+        \param arg_meta_data
+            The meta data already known at the time the stream is pushed to
+            the player queue. These data may be overridden by any meta data
+            extracted later from the stream when it is playing.
+
+        \param out_fifo_overflow
+            True if the stream was rejected because the player's queue is
+            full.
+
+        \param out_is_playing
+            True if the player is currently playing. Can be used to detect
+            inconsistencies between player and client, i.e., bugs.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
         <method name="Push">
             <arg name="stream_id" type="q" direction="in"/>
             <arg name="stream_url" type="s" direction="in"/>
@@ -25,7 +64,7 @@
             <arg name="stop_position" type="x" direction="in"/>
             <arg name="stop_units" type="s" direction="in"/>
             <arg name="keep_first_n_entries" type="n" direction="in"/>
-            <arg name="meta_data" type="a(ss)">
+            <arg name="meta_data" type="a(ss)" direction="in">
                 <mock_check_fn name="MockDBusUtils::expect_meta_data"/>
             </arg>
             <arg name="fifo_overflow" type="b" direction="out"/>
