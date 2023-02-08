@@ -49,6 +49,11 @@
             True if the player is currently playing. Can be used to detect
             inconsistencies between player and client, i.e., bugs.
 
+        \param out_dropped_ids_before, out_dropped_ids_now
+            Arrays of stream IDs dropped from the internal queue. Used for
+            synchronization between player control and player. The latter array
+            is the list of IDs dropped because of this \c Push command.
+
         \param proxy, cancellable, error
             GDBus clutter.
         -->
@@ -69,6 +74,8 @@
             </arg>
             <arg name="fifo_overflow" type="b" direction="out"/>
             <arg name="is_playing" type="b" direction="out"/>
+            <arg name="dropped_ids_before" type="aq" direction="out"/>
+            <arg name="dropped_ids_now" type="aq" direction="out"/>
         </method>
 
         <!--
