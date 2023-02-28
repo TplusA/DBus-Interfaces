@@ -49,9 +49,6 @@ fi
 echo '\page dbus_interfaces D-Bus interface documentation' >"${TOCFILE}"
 echo -n '' >"${IFACESFILE}"
 
-shift
-shift
-
 for f in "$@"
 do
     tail -n +2 "$f" | sed -n '/^\\page /q;p' >>"${TOCFILE}"
