@@ -62,7 +62,9 @@
         -->
         <method name="Push">
             <arg name="stream_id" type="q" direction="in"/>
-            <arg name="stream_urls" type="a(sb)" direction="in"/>
+            <arg name="stream_urls" type="a(sb)" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_pushed_stream_uris"/>
+            </arg>
             <arg name="stream_key" type="ay" direction="in">
                 <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
                 <mock_check_fn name="MockDBusUtils::expect_byte_array"/>
@@ -77,8 +79,12 @@
             </arg>
             <arg name="fifo_overflow" type="b" direction="out"/>
             <arg name="is_playing" type="b" direction="out"/>
-            <arg name="dropped_ids_before" type="aq" direction="out"/>
-            <arg name="dropped_ids_now" type="aq" direction="out"/>
+            <arg name="dropped_ids_before" type="aq" direction="out">
+                <mock_check_fn name="MockDBusUtils::expect_dropped_stream_ids"/>
+            </arg>
+            <arg name="dropped_ids_now" type="aq" direction="out">
+                <mock_check_fn name="MockDBusUtils::expect_dropped_stream_ids"/>
+            </arg>
         </method>
 
         <!--
