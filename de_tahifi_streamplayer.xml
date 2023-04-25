@@ -88,6 +88,64 @@
         </method>
 
         <!--
+        Append multiple streams to the queue. Use this method for prefilling
+        the queue with a single method invocation, i.e., if you already have
+        a list of streams. Prefer simple \c Push calls for adding single
+        streams (for instance when discovering new streams while traversing a
+        directory structure).
+
+        \param arg_items
+            Array of items to push to the queue. Each item consists of stream
+            ID, array of stream URLs, stream key (as variant type), starte
+            position and units, stop position and units, and array of meta
+            data. See \c Push for details.
+
+        \param arg_keep_first_n_entries
+            How many items to keep in the queue. If set to 0, then the whole
+            queue will be cleared before adding the new streams. If set to -1,
+            the queue will remain untouched.
+
+        \param out_accepted
+            Number of items copied into the queue. If this number is smaller
+            than the number of items sent, then only the head item elements
+            have been copied, and the tail elements were rejected because the
+            player's queue is full. The rejected items must be sent again
+            later when the queue empties (so avoid excessive D-Bus traffic by
+            \e not sending hundreds of items at once, and try to match the
+            number of items to the estimated number of free slots).
+
+        \param out_free_slots
+            Number of free slots in the player's queue.
+
+        \param out_is_playing
+            True if the player is currently playing. Can be used to detect
+            inconsistencies between player and client, i.e., bugs.
+
+        \param out_dropped_ids_before, out_dropped_ids_now
+            Arrays of stream IDs dropped from the internal queue. Used for
+            synchronization between player control and player. The latter array
+            is the list of IDs dropped because of this \c PushMulti command.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="PushMulti">
+            <arg name="items" type="a(qa(sb)vxsxsa(ss))" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_push_multiple_streams"/>
+            </arg>
+            <arg name="keep_first_n_entries" type="n" direction="in"/>
+            <arg name="accepted" type="u" direction="out"/>
+            <arg name="free_slots" type="u" direction="out"/>
+            <arg name="is_playing" type="b" direction="out"/>
+            <arg name="dropped_ids_before" type="aq" direction="out">
+                <mock_check_fn name="MockDBusUtils::expect_dropped_stream_ids"/>
+            </arg>
+            <arg name="dropped_ids_now" type="aq" direction="out">
+                <mock_check_fn name="MockDBusUtils::expect_dropped_stream_ids"/>
+            </arg>
+        </method>
+
+        <!--
         Emitted when the player has removed a stream from the queue before it
         started playing.
 
