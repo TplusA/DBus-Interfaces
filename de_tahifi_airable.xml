@@ -76,9 +76,8 @@
             The D-Bus method returns an error code to the caller. Check file
             de_tahifi_lists_errors.h or de_tahifi_lists_errors.hh for possible
             values and their documentation.
-        \param out_type
-            Type of data the \e input Airable entry contains (can be used for
-            debugging or generating better error messages).
+        \param out_service
+            Type of service the Airable entry belongs to.
         \param out_is_relative
             True in case the \e input URL was a relative link, false in case
             the URL was an absolute one.
@@ -96,6 +95,8 @@
             See also \c de.tahifi.Lists.Navigation.GetRankedStreamLinks().
         \param out_image_stream_key
             Stream key for retrieval of cover art.
+        \param out_meta_data
+            Initial meta data extracted from the Airable entry.
         \param proxy, cancellable, error
             GDBus clutter.
         -->
@@ -103,13 +104,14 @@
             <arg name="url" type="s" direction="in"/>
             <arg name="cookie" type="u" direction="out"/>
             <arg name="error_code" type="y" direction="out"/>
-            <arg name="type" type="s" direction="out"/>
+            <arg name="service" type="s" direction="out"/>
             <arg name="is_relative" type="b" direction="out"/>
             <arg name="is_stream" type="b" direction="out"/>
             <arg name="urls" type="a(uus)" direction="out"/>
             <arg name="image_stream_key" type="ay" direction="out">
                 <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
             </arg>
+            <arg name="meta_data" type="a(ss)" direction="out"/>
         </method>
 
         <!--
@@ -118,13 +120,14 @@
         <method name="ResolveByCookie">
             <arg name="cookie" type="u" direction="in"/>
             <arg name="error_code" type="y" direction="out"/>
-            <arg name="type" type="s" direction="out"/>
+            <arg name="service" type="s" direction="out"/>
             <arg name="is_relative" type="b" direction="out"/>
             <arg name="is_stream" type="b" direction="out"/>
             <arg name="urls" type="a(uus)" direction="out"/>
             <arg name="image_stream_key" type="ay" direction="out">
                 <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
             </arg>
+            <arg name="meta_data" type="a(ss)" direction="out"/>
         </method>
 
         <!--
