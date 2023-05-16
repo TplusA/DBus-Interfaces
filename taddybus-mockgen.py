@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
 #
-# Copyright (C) 2022  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2022, 2023  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of T+A-D-Bus.
 #
@@ -740,6 +740,7 @@ class Expectation
     const std::string &get_name() const {{ return name_; }}
     void set_sequence_serial(unsigned int ss) {{ sequence_serial_ = ss; }}
     unsigned int get_sequence_serial() const {{ return sequence_serial_; }}
+    virtual std::string get_details() const {{ return ""; }}
 }};
 
 class Mock
