@@ -20,6 +20,12 @@
         \param arg_stream_id
             ID of the stream.
 
+        \param arg_audio_source
+            ID of the audio source the belongs to. This string may be left
+            empty in case the audio source is unknown or not important.
+            In case of StrBo links, the player might be able to figure out
+            the audio source by itself.
+
         \param arg_stream_urls
             A ranked array of pairs of URI and flag. The URI can be a plain URI
             (in which case its flag must be \c false), or an Airable link the
@@ -62,6 +68,7 @@
         -->
         <method name="Push">
             <arg name="stream_id" type="q" direction="in"/>
+            <arg name="audio_source" type="s" direction="in"/>
             <arg name="stream_urls" type="a(sb)" direction="in">
                 <mock_check_fn name="MockDBusUtils::expect_pushed_stream_uris"/>
             </arg>
@@ -295,6 +302,10 @@
             Stream key of the playing stream. This is supposed to be a stable
             identifier that refers to the stream as a source.
 
+        \param arg_audio_source
+            ID of the audio source the belongs to. This string will be empty
+            in case the audio source is unknown.
+
         \param arg_url
             URL of the stream that is now playing.
 
@@ -318,6 +329,7 @@
             <arg name="stream_key" type="ay">
                 <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
             </arg>
+            <arg name="audio_source" type="s"/>
             <arg name="url" type="s"/>
             <arg name="url_fifo_is_full" type="b"/>
             <arg name="dropped_ids" type="aq"/>
