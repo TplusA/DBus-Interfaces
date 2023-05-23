@@ -21,8 +21,8 @@
             ID of the stream.
 
         \param arg_audio_source
-            ID of the audio source the belongs to. This string may be left
-            empty in case the audio source is unknown or not important.
+            ID of the audio source the stream belongs to. This string may be
+            left empty in case the audio source is unknown or not important.
             In case of StrBo links, the player might be able to figure out
             the audio source by itself.
 
@@ -103,9 +103,17 @@
 
         \param arg_items
             Array of items to push to the queue. Each item consists of stream
-            ID, array of stream URLs, stream key (as variant type), starte
-            position and units, stop position and units, and array of meta
-            data. See \c Push for details.
+            ID, audio source ID, array of stream URLs, stream key (as
+            variant type), start position and units, stop position and units,
+            and array of meta data. See \c Push for details.
+
+        \param arg_audio_source
+            ID of the audio source the streams belong to. There is a
+            corresponding field in \p arg_items for this as well to enable
+            transmission of per-stream audio source information, which will
+            be filled in by this value if left empty. This string may be left
+            empty in case the audio source is unknown or not important, or
+            if all streams in \p arg_items have their own audio source ID.
 
         \param arg_keep_first_n_entries
             How many items to keep in the queue. If set to 0, then the whole
@@ -137,9 +145,10 @@
             GDBus clutter.
         -->
         <method name="PushMulti">
-            <arg name="items" type="a(qa(sb)vxsxsa(ss))" direction="in">
+            <arg name="items" type="a(qsa(sb)vxsxsa(ss))" direction="in">
                 <mock_check_fn name="MockDBusUtils::expect_push_multiple_streams"/>
             </arg>
+            <arg name="audio_source" type="s" direction="in"/>
             <arg name="keep_first_n_entries" type="n" direction="in"/>
             <arg name="accepted" type="u" direction="out"/>
             <arg name="free_slots" type="u" direction="out"/>
@@ -303,8 +312,8 @@
             identifier that refers to the stream as a source.
 
         \param arg_audio_source
-            ID of the audio source the belongs to. This string will be empty
-            in case the audio source is unknown.
+            ID of the audio source the stream belongs to. This string will
+            be empty in case the audio source is unknown.
 
         \param arg_url
             URL of the stream that is now playing.
