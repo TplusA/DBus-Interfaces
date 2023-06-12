@@ -65,7 +65,7 @@
         </method>
 
         <!--
-        Register an audio source.
+        Register a primary audio source.
 
         \param arg_source_id
             Unique ID of the audio source.
@@ -80,6 +80,10 @@
             startup, but requesting the source will fail as long as the player
             hasn't registered yet.
 
+        \param arg_pure
+            Set to true if the audio source cannot have sub-sources. Set to
+            false to allow association of sub-sources.
+
         \param arg_path
             D-Bus object path to the source's \c de.tahifi.AudioPath.Source
             implementation.
@@ -91,11 +95,38 @@
             <arg name="source_id" type="s" direction="in"/>
             <arg name="source_name" type="s" direction="in"/>
             <arg name="player_id" type="s" direction="in"/>
+            <arg name="pure" type="b" direction="in"/>
             <arg name="path" type="o" direction="in"/>
         </method>
 
         <!--
-        Request to activate the player responsible for the given source.
+        Register an audio sub-source.
+
+        \param arg_sub_source_id
+            Unique ID of the audio sub-source. Note that primary audio
+            sources and sub-sources share the same namespace, so there cannot
+            be sub-sources with the same ID with a primary audio source.
+
+        \param arg_sub_source_name
+            Descriptive name of the sub-source.
+
+        \param arg_parent_source_id
+            ID of the primary audio source the sub-source is part of. The
+            primary audio source must have been registered before this call
+            can succeed. The player responsible for the sub-source is the
+            same as for the primary audio source.
+
+        \param proxy, cancellable, error
+            GDBus clutter.
+        -->
+        <method name="RegisterSubSource">
+            <arg name="sub_source_id" type="s" direction="in"/>
+            <arg name="sub_source_name" type="s" direction="in"/>
+            <arg name="parent_source_id" type="s" direction="in"/>
+        </method>
+
+        <!--
+        Request to activate the player responsible for the given audio source.
 
         This method should not be called synchronously because the callee needs
         to take some actions to actually switch sources and players. In case
@@ -109,7 +140,8 @@
         signal before requesting a source.
 
         \param arg_source_id
-            Non-empty ID of the source that wants to play.
+            Non-empty ID of the audio source that wants to play. This can be
+            the ID of a primary audio source or a sub-source.
 
         \param arg_request_data
             Possibly empty data for the source request. This can be any extra
@@ -122,6 +154,13 @@
             True in case the player has been switched to, false in case the
             player was active already.
 
+        \param out_primary_source_id
+            ID of the primary audio source which has been switched to. In
+            case the requested audio source ID referred to a sub-source, the
+            ID of the primary audio source associated with that sub-source is
+            returned here. In case the requested ID referred to a primary
+            audio source, its ID is echoed here.
+
         \param proxy, cancellable, error
             GDBus clutter.
         -->
@@ -132,6 +171,7 @@
             </arg>
             <arg name="player_id" type="s" direction="out"/>
             <arg name="switched" type="b" direction="out"/>
+            <arg name="primary_source_id" type="s" direction="out"/>
         </method>
 
         <!--
@@ -192,20 +232,24 @@
         synchronously.
 
         \param out_usable
-            Array of tuples of source ID and player ID. This array contains all
-            audio paths that are readily usable.
+            Array of triples of primary audio source ID, array of sub-source
+            IDs, and player ID. This array contains all audio paths that are
+            readily usable. Note that the array of sub-source IDs will be
+            empty for primary audio sources which do not contain any
+            sub-sources.
+
         \param out_incomplete
             Like \p out_usable, but the audio paths returned in this parameter
-            are still incomplete and therefore not usable. Note that the source
-            ID may be empty, indicating players for which no source has been
-            registered yet.
+            are still incomplete and therefore not usable. Note that the
+            primary source ID and array of sub-audio IDs may be empty,
+            indicating players for which no source has been registered yet.
 
         \param proxy, cancellable, error
             GDBus clutter.
         -->
         <method name="GetPaths">
-            <arg name="usable" type="a(ss)" direction="out"/>
-            <arg name="incomplete" type="a(ss)" direction="out"/>
+            <arg name="usable" type="a(sass)" direction="out"/>
+            <arg name="incomplete" type="a(sass)" direction="out"/>
         </method>
 
         <!--
@@ -214,14 +258,18 @@
         This method returns quickly, so it is usually safe to call
         synchronously.
 
-        \param out_source_id, out_player_id
+        \param out_source_id, out_sub_source_id, out_player_id
             The current path. Note that the path might be empty or incomplete.
+            An empty \p out_sub_source_id does not indicate an incomplete
+            path, but means that the primary audio source ID was requested
+            directly without any sub-source.
 
         \param proxy, cancellable, error
             GDBus clutter.
         -->
         <method name="GetCurrentPath">
             <arg name="source_id" type="s" direction="out"/>
+            <arg name="sub_source_id" type="s" direction="out"/>
             <arg name="player_id" type="s" direction="out"/>
         </method>
 
@@ -246,7 +294,9 @@
         -->
         <method name="GetSourceInfo">
             <arg name="source_id" type="s" direction="in"/>
+            <arg name="primary_source_id" type="s" direction="out"/>
             <arg name="source_name" type="s" direction="out"/>
+            <arg name="sub_sources" type="a(ss)" direction="out"/>
             <arg name="player_id" type="s" direction="out"/>
             <arg name="dbusname" type="s" direction="out"/>
             <arg name="dbuspath" type="o" direction="out"/>
@@ -263,11 +313,16 @@
         <!--
         Signal emitted when a new, usable audio path is available.
 
-        An audio path is usable if both, an audio source and its associated
-        player, have registered with the audio path manager.
+        An audio path is usable if both, a primary audio source and its
+        associated player, have registered with the audio path manager.
+
+        For any newly registered sub-source, a signal will be emitted with
+        the ID of its primary audio source in \p out_source_id, and its own
+        sub-source ID in \p out_sub_source_id.
         -->
         <signal name="PathAvailable">
             <arg name="source_id" type="s"/>
+            <arg name="sub_source_id" type="s"/>
             <arg name="player_id" type="s"/>
         </signal>
 
@@ -286,19 +341,27 @@
         the signal emission is omitted.
 
         \param arg_source_id
-            ID of the selected source, empty in case no source is selected
-            anymore. There might still be an active player in the latter case.
+            ID of the selected primary audio source, empty in case no audio
+            source is selected anymore. There might still be an active player
+            in the latter case.
+
+        \param arg_sub_source_id
+            ID of the selected sub-source, if any. In case an audio sub-source
+            was passed to \c de.tahifi.AudioPath.Manager.RequestSource, then
+            that ID will end up here. The ID of the associated primary audio
+            source will end up in \p arg_source_id.
 
         \param arg_player_id
             ID of the active player, empty in case no player is active. An
-            empty player ID implies an empty source ID (but not the other way
-            around).
+            empty player ID implies an empty primary audio source ID (but not
+            the other way around).
 
         \param object
             GDBus clutter.
         -->
         <signal name="PathDeferred">
             <arg name="source_id" type="s"/>
+            <arg name="sub_source_id" type="s"/>
             <arg name="player_id" type="s"/>
         </signal>
 
@@ -309,13 +372,18 @@
         is allowed to play when this signal is emitted.
 
         \param arg_source_id
-            ID of the selected source, empty in case no source is selected
-            anymore. There might still be an active player in the latter case.
+            ID of the selected primary audio source, empty in case no audio
+            source is selected anymore. There might still be an active player
+            in the latter case.
+
+        \param arg_sub_source_id
+            ID of the selected sub-source, if any. If empty, then the audio
+            path is active using the primary audio source directly.
 
         \param arg_player_id
             ID of the active player, empty in case no player is active. An
-            empty player ID implies an empty source ID (but not the other way
-            around).
+            empty player ID implies an empty primary audio source ID (but not
+            the other way around).
 
         \param arg_request_data
             Possibly empty data passed to the audio source request.
@@ -325,6 +393,7 @@
         -->
         <signal name="PathActivated">
             <arg name="source_id" type="s"/>
+            <arg name="sub_source_id" type="s"/>
             <arg name="player_id" type="s"/>
             <arg name="request_data" type="a{sv}">
                 <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
@@ -336,11 +405,12 @@
 
         When the active audio path is requested again, then nothing really
         happens. In this case, this signal is emitted to let every process in
-        the system know that the audio path has been selected again. The
-        primarily intention behind this is to propagate the extra request data
-        which have been passed to the request.
+        the system know that the audio path has been selected again.
 
-        \param arg_source_id, arg_player_id
+        The primarily intention behind this is to propagate the extra request
+        data which have been passed to the request.
+
+        \param arg_source_id, arg_sub_source_id, arg_player_id
             The active audio path.
 
         \param arg_request_data
@@ -351,6 +421,7 @@
         -->
         <signal name="PathReactivated">
             <arg name="source_id" type="s"/>
+            <arg name="sub_source_id" type="s"/>
             <arg name="player_id" type="s"/>
             <arg name="request_data" type="a{sv}">
                 <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
@@ -373,6 +444,7 @@
         -->
         <method name="SelectedOnHold">
             <arg name="source_id" type="s" direction="in"/>
+            <arg name="sub_source_id" type="s" direction="in"/>
             <arg name="request_data" type="a{sv}" direction="in">
                 <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
             </arg>
@@ -383,11 +455,12 @@
 
         The corresponding player will be active by the time this method is
         called. In case there is only a single source managed by the
-        implementation of this interface, the \p arg_source_id parameter may be
-        safely ignored.
+        implementation of this interface, the \p arg_source_id and
+        \p arg_sub_source_id parameters may be safely ignored.
         -->
         <method name="Selected">
             <arg name="source_id" type="s" direction="in"/>
+            <arg name="sub_source_id" type="s" direction="in"/>
             <arg name="request_data" type="a{sv}" direction="in">
                 <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
             </arg>
@@ -398,10 +471,12 @@
 
         The active player may have switched by the time this method is called.
         In case there is only a single source managed by the implementation of
-        this interface, the \p arg_source_id parameter may be safely ignored.
+        this interface, the \p arg_source_id and \p arg_sub_source_id
+        parameters may be safely ignored.
         -->
         <method name="Deselected">
             <arg name="source_id" type="s" direction="in"/>
+            <arg name="sub_source_id" type="s" direction="in"/>
             <arg name="request_data" type="a{sv}" direction="in">
                 <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
             </arg>
