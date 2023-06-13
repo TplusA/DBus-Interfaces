@@ -435,7 +435,7 @@ class {}: public Expectation
 
     void check({} *proxy, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data{})
     {{
-        CHECK(proxy == proxy_pointer());
+        CHECK(proxy == proxy_pointer(pp_offset_));
         if(cancellable != nullptr)
             g_object_ref(cancellable);
         observed_cancellable_ = cancellable;
@@ -459,7 +459,7 @@ class {}: public Expectation
     {{
         REQUIRE(observed_async_ready_callback_ != nullptr);
         observed_async_ready_callback_(
-                    reinterpret_cast<GObject *>(proxy_pointer()),
+                    reinterpret_cast<GObject *>(proxy_pointer(pp_offset_)),
                     async_result_pointer(), observed_user_data_);
     }}
 
@@ -467,6 +467,9 @@ class {}: public Expectation
     {{
         async_ready_ignored_ = true;
     }}
+
+    {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
 }};
 """
     class_name = method.attrib['name']
@@ -496,7 +499,8 @@ class {}: public Expectation
             iface_type,
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            _format_string_list(checks, 8, terminator=';')),
+            _format_string_list(checks, 8, terminator=';'),
+            class_name, class_name),
           file=hhfile)
 
     template_finish = """// Expecting async method finish: {}
@@ -520,7 +524,7 @@ class {}: public Expectation
 
     gboolean check({} *proxy{}, GAsyncResult *res, GError **error)
     {{
-        CHECK(proxy == proxy_pointer());
+        CHECK(proxy == proxy_pointer(pp_offset_));
         CHECK(res != nullptr);
         observed_async_result_ = res;
 
@@ -534,6 +538,9 @@ class {}: public Expectation
         *error = nullptr;
         return TRUE;
     }}
+
+    {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
 }};
 """
     class_name = method.attrib['name'] + 'Finish'
@@ -565,7 +572,8 @@ class {}: public Expectation
             iface_type,
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            _format_string_list(checks, 8, terminator=';')),
+            _format_string_list(checks, 8, terminator=';'),
+            class_name, class_name),
           file=hhfile)
 
     template_sync = """// Expecting sync method invocation: {}
@@ -591,7 +599,7 @@ class {}: public Expectation
 
     gboolean check({} *proxy{}, GCancellable *cancellable, GError **error)
     {{
-        CHECK(proxy == proxy_pointer());
+        CHECK(proxy == proxy_pointer(pp_offset_));
         if(cancellable != nullptr)
             g_object_ref(cancellable);
         observed_cancellable_ = cancellable;
@@ -606,6 +614,9 @@ class {}: public Expectation
         *error = nullptr;
         return TRUE;
     }}
+
+    {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
 }};
 """
     class_name = method.attrib['name'] + 'Sync'
@@ -639,7 +650,8 @@ class {}: public Expectation
             iface_type,
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            _format_string_list(checks, 8, terminator=';')),
+            _format_string_list(checks, 8, terminator=';'),
+            class_name, class_name),
           file=hhfile)
 
     template_complete = """// Expecting async method completion: {}
@@ -658,8 +670,8 @@ class {}: public Expectation
 
     void check({} *object, GDBusMethodInvocation *invocation{})
     {{
-        CHECK(object == proxy_pointer());
-        CHECK(invocation == invocation_pointer());{}
+        CHECK(object == proxy_pointer(pp_offset_));
+        CHECK(invocation == invocation_pointer(ip_offset_));{}
     }}
 }};
 """
@@ -705,19 +717,30 @@ static constexpr unsigned long PROXY_POINTER_PATTERN = {};
 static constexpr unsigned long ASYNC_RESULT_PATTERN = {};
 static constexpr unsigned long METHOD_INVOCATION_PATTERN = {};
 
-static inline auto *proxy_pointer()
+static inline auto *proxy_pointer(unsigned long offset = 0)
 {{
-    return reinterpret_cast<{} *>(PROXY_POINTER_PATTERN);
+    return reinterpret_cast<{} *>(PROXY_POINTER_PATTERN + offset);
 }}
 
-static inline GAsyncResult *async_result_pointer()
+static inline GAsyncResult *async_result_pointer(unsigned long offset = 0)
 {{
-    return reinterpret_cast<GAsyncResult *>(ASYNC_RESULT_PATTERN);
+    return reinterpret_cast<GAsyncResult *>(ASYNC_RESULT_PATTERN + offset);
 }}
 
-static inline GDBusMethodInvocation *invocation_pointer()
+static inline GDBusMethodInvocation *invocation_pointer(unsigned long offset = 0)
 {{
-    return reinterpret_cast<GDBusMethodInvocation *>(METHOD_INVOCATION_PATTERN);
+    return reinterpret_cast<GDBusMethodInvocation *>(METHOD_INVOCATION_PATTERN + offset);
+}}
+
+static inline std::unique_ptr<TDBus::Proxy<{}>>
+make_unique_proxy(
+        std::string &&name = "{}",
+        std::string &&path = "{}",
+        unsigned long offset = 0)
+{{
+    return std::make_unique<TDBus::Proxy<{}>>(TDBus::Proxy<{}>::make_proxy_for_testing(
+            std::move(name), std::move(path),
+            PROXY_POINTER_PATTERN + offset));
 }}
 
 /*! Base class for expectations. */
@@ -726,6 +749,10 @@ class Expectation
   private:
     std::string name_;
     unsigned int sequence_serial_;
+
+  protected:
+    unsigned long pp_offset_;
+    unsigned long ip_offset_;
 
   public:
     Expectation(const Expectation &) = delete;
@@ -805,10 +832,14 @@ class Mock
     iface_name = iface.attrib['name']
     iface_name_stripped = _remove_prefix(iface_name, iface_prefix)
     iface_type = c_namespace.replace('_', '') + iface_name_stripped
+    dbus_name = 'unittests.up.' + iface_name
     print(template.format(dummy_pointer_value,
                           hex(int(dummy_pointer_value, 0) + 1),
                           hex(int(dummy_pointer_value, 0) + 2),
-                          iface_type, cpp_namespace),
+                          iface_type,
+                          iface_type, dbus_name, dbus_name.replace('.', '/'),
+                          iface_type, iface_type,
+                          cpp_namespace),
           file=hhfile)
 
     for method in iface.findall('method'):
@@ -927,7 +958,7 @@ gboolean {}({} *proxy{}{}, GCancellable *cancellable, GError **error)
 void {}({} *object, GDBusMethodInvocation *invocation{})
 {{
     REQUIRE({}::singleton != nullptr);
-    REQUIRE(object == {}::proxy_pointer());
+    REQUIRE(object != nullptr);
     return {}::singleton->check_next<{}::{}>(object, invocation{});
 }}
 """
@@ -944,7 +975,7 @@ void {}({} *object, GDBusMethodInvocation *invocation{})
             iface_type,
             _format_string_list(complete_fn_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            cpp_namespace, cpp_namespace, cpp_namespace, cpp_namespace,
+            cpp_namespace, cpp_namespace, cpp_namespace,
             method.attrib['name'] + 'Complete',
             _format_string_list(complete_forward_args, 0,
                                 leading_sep=', ', leading_indent=False)),
