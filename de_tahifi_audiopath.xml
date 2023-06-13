@@ -127,7 +127,9 @@
         -->
         <method name="RequestSource">
             <arg name="source_id" type="s" direction="in"/>
-            <arg name="request_data" type="a{sv}" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
             <arg name="player_id" type="s" direction="out"/>
             <arg name="switched" type="b" direction="out"/>
         </method>
@@ -156,7 +158,9 @@
         -->
         <method name="ReleasePath">
             <arg name="deactivate_player" type="b" direction="in"/>
-            <arg name="request_data" type="a{sv}" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
         </method>
 
         <!--
@@ -322,7 +326,9 @@
         <signal name="PathActivated">
             <arg name="source_id" type="s"/>
             <arg name="player_id" type="s"/>
-            <arg name="request_data" type="a{sv}"/>
+            <arg name="request_data" type="a{sv}">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
         </signal>
 
         <!--
@@ -346,7 +352,9 @@
         <signal name="PathReactivated">
             <arg name="source_id" type="s"/>
             <arg name="player_id" type="s"/>
-            <arg name="request_data" type="a{sv}"/>
+            <arg name="request_data" type="a{sv}">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
         </signal>
     </interface>
 
@@ -365,7 +373,9 @@
         -->
         <method name="SelectedOnHold">
             <arg name="source_id" type="s" direction="in"/>
-            <arg name="request_data" type="a{sv}" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
         </method>
 
         <!--
@@ -378,7 +388,9 @@
         -->
         <method name="Selected">
             <arg name="source_id" type="s" direction="in"/>
-            <arg name="request_data" type="a{sv}" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
         </method>
 
         <!--
@@ -390,7 +402,9 @@
         -->
         <method name="Deselected">
             <arg name="source_id" type="s" direction="in"/>
-            <arg name="request_data" type="a{sv}" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
         </method>
     </interface>
 
@@ -402,7 +416,9 @@
         the audio device.
         -->
         <method name="Activate">
-            <arg name="request_data" type="a{sv}" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
         </method>
 
         <!--
@@ -416,7 +432,9 @@
         reject any play or queue requests while in non-active state.
         -->
         <method name="Deactivate">
-            <arg name="request_data" type="a{sv}" direction="in"/>
+            <arg name="request_data" type="a{sv}" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_dictionary"/>
+            </arg>
         </method>
     </interface>
 </node>
