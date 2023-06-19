@@ -761,7 +761,9 @@ class Expectation
     Expectation &operator=(Expectation &&) = default;
     Expectation(std::string &&name):
         name_(std::move(name)),
-        sequence_serial_(std::numeric_limits<unsigned int>::max())
+        sequence_serial_(std::numeric_limits<unsigned int>::max()),
+        pp_offset_(0),
+        ip_offset_(0)
     {{}}
     virtual ~Expectation() {{}}
     const std::string &get_name() const {{ return name_; }}
