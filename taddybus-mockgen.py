@@ -488,7 +488,7 @@ class {}: public Expectation
         _mk_cleanup_statements(method, True, need_return_types=False)
     checks = _mk_check_statements(method, True)
     print(template_call.format(
-            iface_name + '.' + method.attrib['name'], class_name,
+            iface_name + '.' + class_name, class_name,
             _format_string_list(members_async, 4, terminator=';'),
             class_name,
             _format_string_list(ctor_args, 0, leading_indent=False),
