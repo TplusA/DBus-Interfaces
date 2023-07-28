@@ -800,7 +800,7 @@ class Mock
     template <typename T, typename ... Args>
     T &expect(Args ... args)
     {{
-        return *static_cast<T *>(expectations_.add(std::make_unique<T>(args...)));
+        return *static_cast<T *>(expectations_.add(std::make_unique<T>(std::forward<Args>(args)...)));
     }}
 
     template <typename T>
@@ -823,7 +823,7 @@ class Mock
     template <typename T, typename ... Args>
     auto check_next(Args ... args) -> decltype(std::declval<T>().check(args...))
     {{
-        return expectations_.check_and_advance<T, decltype(std::declval<T>().check(args...))>(args...);
+        return expectations_.check_and_advance<T, decltype(std::declval<T>().check(args...))>(std::forward<Args>(args)...);
     }}
 
     template <typename T>
