@@ -97,7 +97,8 @@ def _map_simple_type_to_ctype(typespec):
         "u": "guint",
         "v": "GVariant *",
         "x": "gint64",
-        "y": "guchar"
+        "y": "guchar",
+        "as": "const gchar *const *",
     }
 
     ctype = dbus_type_to_ctype.get(typespec, None)
@@ -115,12 +116,17 @@ def _type_is_string(param):
     return param.attrib['type'] in ('s', 'o')
 
 
+def _type_is_string_array(param):
+    return param.attrib['type'] == 'as'
+
+
 def _type_is_float(param):
     return param.attrib['type'] == 'd'
 
 
 def _type_is_gvariant(param):
-    return param.attrib['type'][0] in ('v', 'a')
+    t = param.attrib['type']
+    return t[0] in ('v', 'a') and t != 'as'
 
 
 def _map_simple_type_to_cptrtype(typespec):
@@ -136,7 +142,8 @@ def _map_simple_type_to_cptrtype(typespec):
         "u": "guint *",
         "v": "GVariant **",
         "x": "gint64 *",
-        "y": "guchar *"
+        "y": "guchar *",
+        "as": "gchar ***",
     }
 
     ctype = dbus_type_to_ctype.get(typespec, None)
@@ -159,7 +166,8 @@ def _map_simple_type_to_ctortype(typespec):
         "u": "guint",
         "v": "GVariant *",
         "x": "gint64",
-        "y": "guchar"
+        "y": "guchar",
+        "as": "std::vector<std::string> &&",
     }
 
     ctype = dbus_type_to_cpptype.get(typespec, None)
@@ -182,7 +190,8 @@ def _map_simple_type_to_memtype(typespec):
         "u": "guint",
         "v": "GVariant *",
         "x": "gint64",
-        "y": "guchar"
+        "y": "guchar",
+        "as": "std::vector<std::string>",
     }
 
     ctype = dbus_type_to_cpptype.get(typespec, None)
@@ -226,21 +235,28 @@ def _mk_argument_list(params, is_method, mapping_fn, *,
 
         argname += param.attrib['name'] + append_to_name
         type = None
+        is_array = None
+        is_forced_type = False
 
         for anno in param.findall('annotation'):
             if anno.attrib['name'] == 'org.gtk.GDBus.C.ForceGVariant' and \
                     anno.attrib['value'] == 'arg':
                 type = param.attrib['type']
                 is_array = True
+                is_forced_type = True
                 break
 
-        if not type:
+        if not is_forced_type:
             type = param.attrib['type']
             is_array = type[0] == 'a'
 
         if is_array:
-            t = mapping_fn('v') + argname + ' /* ' + type + ' */'
+            if not is_forced_type and type == 'as':
+                t = mapping_fn(type) + argname
+            else:
+                t = mapping_fn('v') + argname + ' /* ' + type + ' */'
         else:
+            assert type is not None
             t = mapping_fn(type[0])
             t += argname
 
@@ -308,9 +324,12 @@ def _mk_cleanup_statements(params, is_method, *, need_return_types,
             else:
                 argname = param.attrib['name']
 
-            statements.append('if(' + argname + '_ != nullptr) '
-                              'g_variant_unref(' + argname + '_)')
-            statements.append(argname + '_ = nullptr')
+            if _type_is_string_array(param):
+                statements.append(argname + '_.clear()')
+            else:
+                statements.append('if(' + argname + '_ != nullptr) '
+                                  'g_variant_unref(' + argname + '_)')
+                statements.append(argname + '_ = nullptr')
         elif not need_return_types and _type_is_gvariant(param):
             if need_prefixed_names:
                 argname = 'arg_' + param.attrib['name']
@@ -349,6 +368,21 @@ def _mk_check_statements(params, is_method, *, need_return_types=False,
                 statements.append(
                     'else if(!' + argname + '_.empty()) CHECK(' +
                     argname + ' != nullptr)')
+            elif _type_is_string_array(param):
+                statements.append(
+                    'if(' + argname + '_.empty() && ' + argname +
+                    ' != nullptr && ' + argname +
+                    '[0] != nullptr && ' + argname +
+                    '[0][0] != \'\\0\') FAIL_CHECK("Argument ' + argname +
+                    ' expected to be empty")')
+                statements.append(
+                    'else if(g_strv_length(const_cast<gchar **>(' + argname +
+                    ')) != ' + argname +
+                    '_.size()) CHECK(g_strv_length(const_cast<gchar **>(' +
+                    argname + ')) == ' + argname + '_.size())')
+                statements.append(
+                    'else MockDBusUtils::expect_cstrings(' + argname + ', ' +
+                    argname + '_)')
             else:
                 statements.append(
                     'if(' + argname + '_ != nullptr) CHECK(' + argname +
@@ -376,7 +410,7 @@ def _mk_check_statements(params, is_method, *, need_return_types=False,
         elif _type_is_float(param):
             statements.append('CHECK(' + argname + ' <= ' + argname + '_)')
             statements.append('CHECK(' + argname + ' >= ' + argname + '_)')
-        else:
+        elif not _type_is_string_array(param):
             statements.append('CHECK(' + argname + ' == ' + argname + '_)')
 
     return statements
@@ -399,6 +433,10 @@ def _mk_copy_statements(params, is_method, *, need_return_types=False,
         if _type_is_string(param):
             statements.append('*' + argname +
                               ' = g_strdup(' + argname + '_.c_str())')
+        elif _type_is_string_array(param):
+            statements.append('if(' + argname + ' != nullptr) *' + argname +
+                              ' = MockDBusUtils::mk_cstring_array(' +
+                              argname + '_)')
         elif _type_is_gvariant(param):
             statements.append('if(' + argname + ' != nullptr) *' + argname +
                               ' = g_variant_ref(' + argname + '_)')
