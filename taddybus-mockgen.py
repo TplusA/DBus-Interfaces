@@ -764,10 +764,56 @@ class {}: public Expectation
           file=hhfile)
 
 
+def _write_signal_emit_expectation(hhfile, iface_name, iface_name_stripped,
+                                   iface_type, signal):
+    template = """// Expecting signal emission: {}
+class {}: public Expectation
+{{""""""
+   private:{}
+
+   public:
+    explicit {}({}):
+        Expectation("{}"){}
+    {{}}
+
+    void check({} *object{})
+    {{
+        CHECK(object == proxy_pointer(pp_offset_));{}
+    }}
+
+    {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
+}};
+"""
+    class_name = signal.attrib['name']
+    members = _mk_argument_list(signal, False,
+                                _map_simple_type_to_const_memtype,
+                                append_to_name='_')
+    ctor_args = _mk_argument_list(signal, False, _map_simple_type_to_ctortype)
+    check_args = _mk_argument_list(signal, False, _map_simple_type_to_ctype)
+    ctor_init = _mk_initializer_list(signal, False)
+    checks = _mk_check_statements(signal, False)
+
+    print(template.format(
+            iface_name + '.' + class_name, class_name,
+            _format_string_list(members, 4, terminator=';'),
+            class_name,
+            _format_string_list(ctor_args, 0, leading_indent=False),
+            class_name,
+            _format_string_list(ctor_init, 8, leading_sep=','),
+            iface_type,
+            _format_string_list(check_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(checks, 8, terminator=';'),
+            class_name, class_name),
+          file=hhfile)
+
+
 def _write_header_body(hhfile, iface_prefix, c_namespace, cpp_namespace,
                        dummy_pointer_value, iface):
     template = """
 static constexpr unsigned long PROXY_POINTER_PATTERN = {};
+static constexpr unsigned long IFACE_POINTER_PATTERN = PROXY_POINTER_PATTERN;
 static constexpr unsigned long ASYNC_RESULT_PATTERN = {};
 static constexpr unsigned long METHOD_INVOCATION_PATTERN = {};
 
@@ -795,6 +841,14 @@ make_unique_proxy(
     return std::make_unique<TDBus::Proxy<{}>>(TDBus::Proxy<{}>::make_proxy_for_testing(
             std::move(name), std::move(path),
             PROXY_POINTER_PATTERN + offset));
+}}
+
+static inline TDBus::Iface<{}> &get_exported_dummy_iface()
+{{
+    using IfaceType = {};
+    struct Traits {{ static IfaceType *skeleton_new() {{ return reinterpret_cast<IfaceType *>(IFACE_POINTER_PATTERN); }} }};
+    static TDBus::Iface<IfaceType, Traits> iface("{}", true);
+    return reinterpret_cast<TDBus::Iface<IfaceType> &>(iface);
 }}
 
 /*! Base class for expectations. */
@@ -889,12 +943,14 @@ class Mock
     iface_name_stripped = _remove_prefix(iface_name, iface_prefix)
     iface_type = c_namespace.replace('_', '') + iface_name_stripped
     dbus_name = 'unittests.up.' + iface_name
+    dbus_path = dbus_name.replace('.', '/')
     print(template.format(dummy_pointer_value,
                           hex(int(dummy_pointer_value, 0) + 1),
                           hex(int(dummy_pointer_value, 0) + 2),
                           iface_type,
-                          iface_type, dbus_name, dbus_name.replace('.', '/'),
+                          iface_type, dbus_name, dbus_path,
                           iface_type, iface_type,
+                          iface_type, iface_type, dbus_path,
                           cpp_namespace),
           file=hhfile)
 
@@ -902,8 +958,9 @@ class Mock
         _write_method_call_expectation(hhfile, iface_name, iface_name_stripped,
                                        iface_type, method)
 
-    # for signal in iface.findall('signal'):
-    #     _write_signal_emit_expectation(hhfile, iface_name, signal)
+    for signal in iface.findall('signal'):
+        _write_signal_emit_expectation(hhfile, iface_name, iface_name_stripped,
+                                       iface_type, signal)
 
 
 def _write_impl_top(ccfile, mock_header_name):
@@ -1038,6 +1095,33 @@ void {}({} *object, GDBusMethodInvocation *invocation{})
           file=ccfile)
 
 
+def _write_signal_emit_mocks(ccfile, iface_name, iface_type, cpp_namespace,
+                             fn_prefix, signal):
+    template = """
+// Mock function for signal: {}
+void {}({} *object{})
+{{
+    REQUIRE({}::singleton != nullptr);
+    REQUIRE(object != nullptr);
+    return {}::singleton->check_next<{}::{}>(object{});
+}}"""
+    call_fn_args = _mk_argument_list(signal, False, _map_simple_type_to_ctype)
+    call_forward_args = _mk_call_parameter_list(signal, False)
+
+    print(template.format(
+            iface_name + '.' + signal.attrib['name'],
+            _method_name(fn_prefix,
+                         'emit_' + _to_snake_case(signal.attrib['name'])),
+            iface_type,
+            _format_string_list(call_fn_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            cpp_namespace, cpp_namespace, cpp_namespace,
+            signal.attrib['name'],
+            _format_string_list(call_forward_args, 0,
+                                leading_sep=', ', leading_indent=False)),
+          file=ccfile)
+
+
 def _write_impl_body(ccfile, iface_prefix, c_namespace, cpp_namespace, iface):
     template = """template <>
 TDBus::Proxy<{}> &TDBus::get_singleton()
@@ -1064,6 +1148,9 @@ TDBus::Proxy<{}> &TDBus::get_singleton()
     for method in iface.findall('method'):
         _write_method_call_mocks(ccfile, iface_name, iface_type, cpp_namespace,
                                  fn_prefix, method)
+    for signal in iface.findall('signal'):
+        _write_signal_emit_mocks(ccfile, iface_name, iface_type, cpp_namespace,
+                                 fn_prefix, signal)
 
 
 def main():
