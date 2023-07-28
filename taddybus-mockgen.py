@@ -392,11 +392,27 @@ def _mk_check_statements(params, is_method, *, need_return_types=False,
         use_default_checks = True
 
         for check_fn in param.findall('mock_check_fn'):
+            conv = check_fn.attrib.get('type_conversion', None)
+
+            if conv is None:
+                conv = 'g_variant'
+
+            if conv == 'g_variant':
+                arg1 = 'const_cast<GVariant *>(' + argname + ')'
+                arg2 = 'const_cast<GVariant *>(' + argname + '_)'
+            elif conv == 'c++string':
+                arg1 = 'std:string(' + argname + ')'
+                arg2 = 'std:string(' + argname + '_)'
+            elif conv == 'none':
+                arg1 = argname
+                arg2 = argname + '_'
+            else:
+                raise RuntimeError('Invalid conversion type "{}"'.format(conv))
+
             use_default_checks = False
             statements.append(
-                'if(' + argname + '_ != nullptr) ' + check_fn.attrib['name'] +
-                '(const_cast<GVariant *>(' + argname + '), ' +
-                'const_cast<GVariant *>(' + argname + '_))')
+                'if(' + argname + ' != nullptr) ' + check_fn.attrib['name'] +
+                '(' + arg1 + ', ' + arg2 + ')')
 
         if not use_default_checks:
             continue
