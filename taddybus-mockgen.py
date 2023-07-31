@@ -463,6 +463,14 @@ def _mk_copy_statements(params, is_method, *, need_return_types=False,
     return statements
 
 
+def _gen_get_details_fn(code):
+    if code is not None:
+        return '\n    std::string get_details() const final override ' \
+               '{{ {} }}'.format(code)
+    else:
+        return ""
+
+
 def _write_method_call_expectation(hhfile, iface_name, iface_name_stripped,
                                    iface_type, method):
     template_call = """// Expecting async method call: {}
@@ -523,7 +531,7 @@ class {}: public Expectation
     }}
 
     {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
+    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
 """
     class_name = method.attrib['name']
@@ -541,6 +549,36 @@ class {}: public Expectation
     cleanup_statements = \
         _mk_cleanup_statements(method, True, need_return_types=False)
     checks = _mk_check_statements(method, True)
+
+    in_code = None
+    out_code = None
+    complete_code = None
+
+    for details_code in method.findall('mock_details_code'):
+        in_code = details_code.attrib.get('in_code', None)
+        out_code = details_code.attrib.get('out_code', None)
+        complete_code = details_code.attrib.get('complete_code', None)
+
+        if any(c is not None for c in (in_code, out_code, complete_code)):
+            break
+
+    in_code_fn = _gen_get_details_fn(in_code)
+    out_code_fn = _gen_get_details_fn(out_code)
+    complete_code_fn = _gen_get_details_fn(complete_code)
+
+    if in_code is not None and out_code is not None:
+        sync_code_fn = \
+            '\n    std::string get_details() const final override ' \
+            '{{ return [this](){{ {} }}() + " ||=>|| " + ' \
+            '[this](){{ {} }}(); }}' \
+            .format(in_code, out_code)
+    elif in_code is not None:
+        sync_code_fn = in_code_fn
+    elif out_code is not None:
+        sync_code_fn = out_code_fn
+    else:
+        sync_code_fn = ""
+
     print(template_call.format(
             iface_name + '.' + class_name, class_name,
             _format_string_list(members_async, 4, terminator=';'),
@@ -554,7 +592,7 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            class_name, class_name),
+            class_name, class_name, in_code_fn),
           file=hhfile)
 
     template_finish = """// Expecting async method finish: {}
@@ -594,7 +632,7 @@ class {}: public Expectation
     }}
 
     {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
+    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
 """
     class_name = method.attrib['name'] + 'Finish'
@@ -627,7 +665,7 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            class_name, class_name),
+            class_name, class_name, out_code_fn),
           file=hhfile)
 
     template_sync = """// Expecting sync method invocation: {}
@@ -670,7 +708,7 @@ class {}: public Expectation
     }}
 
     {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
+    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
 """
     class_name = method.attrib['name'] + 'Sync'
@@ -705,7 +743,7 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            class_name, class_name),
+            class_name, class_name, sync_code_fn),
           file=hhfile)
 
     template_complete = """// Expecting async method completion: {}
@@ -726,7 +764,7 @@ class {}: public Expectation
     {{
         CHECK(object == proxy_pointer(pp_offset_));
         CHECK(invocation == invocation_pointer(ip_offset_));{}
-    }}
+    }}{}
 }};
 """
     class_name = method.attrib['name'] + 'Complete'
@@ -760,7 +798,8 @@ class {}: public Expectation
             iface_type,
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            _format_string_list(checks, 8, terminator=';')),
+            _format_string_list(checks, 8, terminator=';'),
+            complete_code_fn),
           file=hhfile)
 
 
@@ -782,7 +821,7 @@ class {}: public Expectation
     }}
 
     {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
+    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
 """
     class_name = signal.attrib['name']
@@ -793,6 +832,13 @@ class {}: public Expectation
     check_args = _mk_argument_list(signal, False, _map_simple_type_to_ctype)
     ctor_init = _mk_initializer_list(signal, False)
     checks = _mk_check_statements(signal, False)
+
+    code = None
+    for details_code in signal.findall('mock_details_code'):
+        code = details_code.attrib.get('code', None)
+        if code is not None:
+            break
+    code = _gen_get_details_fn(code)
 
     print(template.format(
             iface_name + '.' + class_name, class_name,
@@ -805,7 +851,7 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            class_name, class_name),
+            class_name, class_name, code),
           file=hhfile)
 
 
