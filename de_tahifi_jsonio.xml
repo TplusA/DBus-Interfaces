@@ -26,6 +26,11 @@
                 <mock_check_fn name="MockDBusUtils::expect_json_object" type_conversion="none"/>
             </arg>
             <arg name="extra" type="as" direction="out"/>
+            <mock_details_code
+                in_code="return std::to_string(arg_params_.size());"
+                out_code="return out_json_;"
+                complete_code="return json_;"
+            />
         </method>
 
         <signal name="Object">
@@ -33,6 +38,7 @@
                 <mock_check_fn name="MockDBusUtils::expect_json_object" type_conversion="none"/>
             </arg>
             <arg name="extra" type="as"/>
+            <mock_details_code code="return arg_json_;"/>
         </signal>
     </interface>
 </node>
