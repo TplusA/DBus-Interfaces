@@ -201,6 +201,34 @@ def _map_simple_type_to_memtype(typespec):
         return ctype
 
 
+def _map_simple_type_to_conversion(typespec):
+    dbus_type_to_fn = {
+        "as": "MockDBusUtils::mk_string_vector",
+    }
+
+    return dbus_type_to_fn.get(typespec, None)
+
+
+def _map_simple_type_to_cpp_default_ctor(typespec):
+    dbus_type_to_ctor = {
+        "b": "FALSE",
+        "d": "0.0",
+        "i": "0",
+        "n": "0",
+        "o": "std::string()",
+        "q": "0",
+        "s": "std::string()",
+        "t": "0",
+        "u": "0",
+        "v": "g_variant_new_string(\"dummy\")",
+        "x": "0",
+        "y": "0",
+        "as": "std::vector<std::string>()",
+    }
+
+    return dbus_type_to_ctor.get(typespec, "{}")
+
+
 def _map_simple_type_to_const_memtype(typespec):
     ctype = _map_simple_type_to_memtype(typespec)
     if ctype and typespec not in ('v', 'a'):
@@ -221,7 +249,8 @@ def _skip_parameter(param, is_method, need_return_types):
 
 def _mk_argument_list(params, is_method, mapping_fn, *,
                       need_return_types=False, append_to_name='',
-                      need_prefixed_names=True):
+                      need_prefixed_names=True, need_types=True,
+                      use_plain_map_result=False):
     args = []
 
     for param in params.findall('arg'):
@@ -234,6 +263,7 @@ def _mk_argument_list(params, is_method, mapping_fn, *,
             argname = ''
 
         argname += param.attrib['name'] + append_to_name
+
         type = None
         is_array = None
         is_forced_type = False
@@ -250,17 +280,34 @@ def _mk_argument_list(params, is_method, mapping_fn, *,
             type = param.attrib['type']
             is_array = type[0] == 'a'
 
-        if is_array:
-            if not is_forced_type and type == 'as':
-                t = mapping_fn(type) + argname
+        if need_types:
+            if is_array:
+                if not is_forced_type and type == 'as':
+                    t = mapping_fn(type) + argname
+                else:
+                    t = mapping_fn('v') + argname + ' /* ' + type + ' */'
             else:
-                t = mapping_fn('v') + argname + ' /* ' + type + ' */'
-        else:
-            assert type is not None
-            t = mapping_fn(type[0])
-            t += argname
+                assert type is not None
+                t = mapping_fn(type[0])
+                t += argname
 
-        args.append(t)
+            args.append(t)
+        else:
+            if is_array:
+                if not is_forced_type and type == 'as':
+                    conv = mapping_fn(type)
+                else:
+                    conv = mapping_fn('v')
+            else:
+                assert type is not None
+                conv = mapping_fn(type[0])
+
+            if use_plain_map_result:
+                args.append(conv)
+            elif conv:
+                args.append(conv + '(' + argname + ')')
+            else:
+                args.append(argname)
 
     return args
 
@@ -517,6 +564,11 @@ class {}: public Expectation
         }}
     }}
 
+    static std::unique_ptr<{}> make_from_check_parameters({} *, GCancellable *, GAsyncReadyCallback, gpointer{})
+    {{
+        return std::make_unique<{}>({});
+    }}
+
     void async_ready()
     {{
         REQUIRE(observed_async_ready_callback_ != nullptr);
@@ -546,6 +598,9 @@ class {}: public Expectation
         'observed_async_ready_callback_(nullptr)',
         'observed_user_data_(nullptr)',
     ]
+    ctor_call_args = _mk_argument_list(method, True,
+                                       _map_simple_type_to_conversion,
+                                       need_types=False)
     cleanup_statements = \
         _mk_cleanup_statements(method, True, need_return_types=False)
     checks = _mk_check_statements(method, True)
@@ -592,6 +647,11 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
+            class_name, iface_type,
+            _format_string_list(check_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            class_name,
+            _format_string_list(ctor_call_args, 0, leading_indent=False),
             class_name, class_name, in_code_fn),
           file=hhfile)
 
@@ -631,6 +691,11 @@ class {}: public Expectation
         return TRUE;
     }}
 
+    static std::unique_ptr<{}> make_from_check_parameters({} *{}, GAsyncResult *, GError **)
+    {{
+        return std::make_unique<{}>(nullptr{});
+    }}
+
     {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
     {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
@@ -649,6 +714,11 @@ class {}: public Expectation
     ctor_init += _mk_initializer_list(method, True,
                                       need_return_types=True)
     ctor_init += ['observed_async_result_(nullptr)']
+    ctor_call_args = _mk_argument_list(method, True,
+                                       _map_simple_type_to_cpp_default_ctor,
+                                       need_return_types=True,
+                                       need_types=False,
+                                       use_plain_map_result=True)
     cleanup_statements = \
         _mk_cleanup_statements(method, True, need_return_types=True)
     checks = _mk_copy_statements(method, True, need_return_types=True)
@@ -665,6 +735,12 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
+            class_name, iface_type,
+            _format_string_list(check_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            class_name,
+            _format_string_list(ctor_call_args, 0, leading_sep=', ',
+                                leading_indent=False),
             class_name, class_name, out_code_fn),
           file=hhfile)
 
@@ -707,6 +783,11 @@ class {}: public Expectation
         return TRUE;
     }}
 
+    static std::unique_ptr<{}> make_from_check_parameters({} *{}, GCancellable *, GError **)
+    {{
+        return std::make_unique<{}>(nullptr{});
+    }}
+
     {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
     {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
@@ -720,6 +801,14 @@ class {}: public Expectation
     ctor_init += _mk_initializer_list(method, True)
     ctor_init += _mk_initializer_list(method, True, need_return_types=True)
     ctor_init += ['observed_cancellable_(nullptr)']
+    ctor_call_args = _mk_argument_list(method, True,
+                                       _map_simple_type_to_conversion,
+                                       need_types=False)
+    ctor_call_args += _mk_argument_list(method, True,
+                                        _map_simple_type_to_cpp_default_ctor,
+                                        need_return_types=True,
+                                        need_types=False,
+                                        use_plain_map_result=True)
     check_args = _mk_argument_list(method, True, _map_simple_type_to_ctype)
     check_args += _mk_argument_list(method, True, _map_simple_type_to_cptrtype,
                                     need_return_types=True)
@@ -743,6 +832,14 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
+
+            class_name, iface_type,
+            _format_string_list(check_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            class_name,
+            _format_string_list(ctor_call_args, 0,
+                                leading_sep=', ', leading_indent=False),
+
             class_name, class_name, sync_code_fn),
           file=hhfile)
 
@@ -765,6 +862,12 @@ class {}: public Expectation
         CHECK(object == proxy_pointer(pp_offset_));
         CHECK(invocation == invocation_pointer(ip_offset_));{}
     }}{}
+
+    static std::unique_ptr<{}> make_from_check_parameters({} *, GDBusMethodInvocation *{})
+    {{
+        return std::make_unique<{}>({});
+    }}
+
 }};
 """
     class_name = method.attrib['name'] + 'Complete'
@@ -778,6 +881,11 @@ class {}: public Expectation
                                   need_prefixed_names=False)
     ctor_init = _mk_initializer_list(method, True, need_return_types=True,
                                      need_prefixed_names=False)
+    ctor_call_args = _mk_argument_list(method, True,
+                                       _map_simple_type_to_conversion,
+                                       need_return_types=True,
+                                       need_prefixed_names=False,
+                                       need_types=False)
     cleanup_statements = \
         _mk_cleanup_statements(method, True, need_return_types=True,
                                need_prefixed_names=False)
@@ -799,7 +907,14 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            complete_code_fn),
+            complete_code_fn,
+
+            class_name, iface_type,
+            _format_string_list(check_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            class_name,
+            _format_string_list(ctor_call_args, 0, leading_indent=False),
+            ),
           file=hhfile)
 
 
@@ -820,6 +935,11 @@ class {}: public Expectation
         CHECK(object == proxy_pointer(pp_offset_));{}
     }}
 
+    static std::unique_ptr<{}> make_from_check_parameters({} *{})
+    {{
+        return std::make_unique<{}>({});
+    }}
+
     {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
     {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
@@ -831,6 +951,9 @@ class {}: public Expectation
     ctor_args = _mk_argument_list(signal, False, _map_simple_type_to_ctortype)
     check_args = _mk_argument_list(signal, False, _map_simple_type_to_ctype)
     ctor_init = _mk_initializer_list(signal, False)
+    ctor_call_args = _mk_argument_list(signal, False,
+                                       _map_simple_type_to_conversion,
+                                       need_types=False)
     checks = _mk_check_statements(signal, False)
 
     code = None
@@ -851,6 +974,11 @@ class {}: public Expectation
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
+            class_name, iface_type,
+            _format_string_list(check_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            class_name,
+            _format_string_list(ctor_call_args, 0, leading_indent=False),
             class_name, class_name, code),
           file=hhfile)
 
@@ -897,91 +1025,63 @@ static inline TDBus::Iface<{}> &get_exported_dummy_iface()
     return reinterpret_cast<TDBus::Iface<IfaceType> &>(iface);
 }}
 
-/*! Base class for expectations. */
-class Expectation
+/*! Base class for {} expectations. */
+class Expectation: public MockExpectationBase
 {{
-  private:
-    std::string name_;
-    unsigned int sequence_serial_;
-
   protected:
     unsigned long pp_offset_;
     unsigned long ip_offset_;
 
   public:
-    Expectation(const Expectation &) = delete;
-    Expectation(Expectation &&) = default;
-    Expectation &operator=(const Expectation &) = delete;
-    Expectation &operator=(Expectation &&) = default;
     Expectation(std::string &&name):
-        name_(std::move(name)),
-        sequence_serial_(std::numeric_limits<unsigned int>::max()),
+        MockExpectationBase(std::move(name)),
         pp_offset_(0),
         ip_offset_(0)
     {{}}
+
     virtual ~Expectation() {{}}
-    const std::string &get_name() const {{ return name_; }}
-    void set_sequence_serial(unsigned int ss) {{ sequence_serial_ = ss; }}
-    unsigned int get_sequence_serial() const {{ return sequence_serial_; }}
-    virtual std::string get_details() const {{ return ""; }}
 }};
 
-class Mock
+class Mock: public MockBase
 {{
-  private:
-    MockExpectationsTemplate<Expectation> expectations_;
-
   public:
     Mock(const Mock &) = delete;
     Mock &operator=(const Mock &) = delete;
 
-    explicit Mock():
-        expectations_("{}")
+    explicit Mock(std::shared_ptr<MockExpectationSequence> eseq = nullptr):
+        MockBase("{}", eseq)
     {{}}
 
     ~Mock() {{}}
 
     void expect(std::unique_ptr<Expectation> expectation)
     {{
-        expectations_.add(std::move(expectation));
+        add(std::move(expectation));
     }}
 
     void expect(Expectation *expectation)
     {{
-        expectations_.add(std::unique_ptr<Expectation>(expectation));
+        add(std::unique_ptr<Expectation>(expectation));
     }}
 
     template <typename T, typename ... Args>
-    T &expect(Args ... args)
+    auto &expect(Args ... args)
     {{
-        return *static_cast<T *>(expectations_.add(std::make_unique<T>(std::forward<Args>(args)...)));
+        static_assert(std::is_base_of_v<Expectation, T> == true);
+        return *static_cast<T *>(add(std::make_unique<T>(std::forward<Args>(args)...)));
     }}
 
     template <typename T>
-    void ignore(std::unique_ptr<T> default_result)
+    void ignore(std::unique_ptr<Expectation> default_result)
     {{
-        expectations_.ignore<T>(std::move(default_result));
+        ignore<T>(std::move(default_result));
     }}
 
     template <typename T>
-    void ignore(T *default_result)
+    void ignore(Expectation *default_result)
     {{
-        expectations_.ignore<T>(std::unique_ptr<Expectation>(default_result));
+        ignore<T>(std::unique_ptr<Expectation>(default_result));
     }}
-
-    template <typename T>
-    void allow() {{ expectations_.allow<T>(); }}
-
-    void done() const {{ expectations_.done(); }}
-
-    template <typename T, typename ... Args>
-    auto check_next(Args ... args) -> decltype(std::declval<T>().check(args...))
-    {{
-        return expectations_.check_and_advance<T, decltype(std::declval<T>().check(args...))>(std::forward<Args>(args)...);
-    }}
-
-    template <typename T>
-    const T &next(const char *caller) {{ return expectations_.next<T>(caller); }}
 }};
 
 """
@@ -997,7 +1097,7 @@ class Mock
                           iface_type, dbus_name, dbus_path,
                           iface_type, iface_type,
                           iface_type, iface_type, dbus_path,
-                          cpp_namespace),
+                          cpp_namespace, cpp_namespace),
           file=hhfile)
 
     for method in iface.findall('method'):
