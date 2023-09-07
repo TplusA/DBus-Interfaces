@@ -520,8 +520,8 @@ def _gen_get_details_fn(code):
 
 def _write_method_call_expectation(hhfile, iface_name, iface_name_stripped,
                                    iface_type, method):
-    template_call = """// Expecting async method call: {}
-class {}: public Expectation
+    template_call = """// Expecting async method call: {iface_name}.{class_name}
+class {class_name}: public Expectation
 {{""""""
   private:
     bool async_ready_ignored_;{}
@@ -531,18 +531,18 @@ class {}: public Expectation
     GAsyncReadyCallback observed_async_ready_callback_;
     gpointer observed_user_data_;
 
-    explicit {}({}):
-        Expectation("{}"),
+    explicit {class_name}({}):
+        Expectation("{class_name}"),
         async_ready_ignored_(false){}
     {{}}
 
-    ~{}()
+    ~{class_name}()
     {{
         if(observed_cancellable_ != nullptr)
             g_object_unref(observed_cancellable_);{}
     }}
 
-    void check({} *proxy, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data{})
+    void check({iface_type} *proxy, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data{})
     {{
         CHECK(proxy == proxy_pointer(pp_offset_));
         if(cancellable != nullptr)
@@ -564,9 +564,9 @@ class {}: public Expectation
         }}
     }}
 
-    static std::unique_ptr<{}> make_from_check_parameters({} *, GCancellable *, GAsyncReadyCallback, gpointer{})
+    static std::unique_ptr<{class_name}> make_from_check_parameters({iface_type} *, GCancellable *, GAsyncReadyCallback, gpointer{})
     {{
-        return std::make_unique<{}>({});
+        return std::make_unique<{class_name}>({});
     }}
 
     void async_ready()
@@ -582,8 +582,8 @@ class {}: public Expectation
         async_ready_ignored_ = true;
     }}
 
-    {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
+    {class_name} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {class_name} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
 """
     class_name = method.attrib['name']
@@ -635,28 +635,37 @@ class {}: public Expectation
         sync_code_fn = ""
 
     print(template_call.format(
-            iface_name + '.' + class_name, class_name,
+            # class members
             _format_string_list(members_async, 4, terminator=';'),
-            class_name,
+
+            # ctor
             _format_string_list(ctor_args, 0, leading_indent=False),
-            class_name,
             _format_string_list(ctor_init, 8, leading_sep=','),
-            class_name,
+
+            # dtor
             _format_string_list(cleanup_statements, 8, terminator=';'),
-            iface_type,
+
+            # check()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            class_name, iface_type,
+
+            # make_from_check_parameters()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            class_name,
             _format_string_list(ctor_call_args, 0, leading_indent=False),
-            class_name, class_name, in_code_fn),
+
+            # extra code
+            in_code_fn,
+
+            # assigned by keyword
+            class_name=class_name,
+            iface_type=iface_type,
+            iface_name=iface_name),
           file=hhfile)
 
-    template_finish = """// Expecting async method finish: {}
-class {}: public Expectation
+    template_finish = """// Expecting async method finish: {iface_name}.{method_name}
+class {class_name}: public Expectation
 {{
   private:
     GError *dbus_call_error_;{}
@@ -664,17 +673,17 @@ class {}: public Expectation
   public:
     GAsyncResult *observed_async_result_;
 
-    explicit {}({}):
-        Expectation("{}"){}
+    explicit {class_name}({}):
+        Expectation("{class_name}"){}
     {{}}
 
-    ~{}()
+    ~{class_name}()
     {{
         if(dbus_call_error_ != nullptr) g_error_free(dbus_call_error_);
         dbus_call_error_ = nullptr;{}
     }}
 
-    gboolean check({} *proxy{}, GAsyncResult *res, GError **error)
+    gboolean check({iface_type} *proxy{}, GAsyncResult *res, GError **error)
     {{
         CHECK(proxy == proxy_pointer(pp_offset_));
         CHECK(res != nullptr);
@@ -691,16 +700,17 @@ class {}: public Expectation
         return TRUE;
     }}
 
-    static std::unique_ptr<{}> make_from_check_parameters({} *{}, GAsyncResult *, GError **)
+    static std::unique_ptr<{class_name}> make_from_check_parameters({iface_type} *{}, GAsyncResult *, GError **)
     {{
-        return std::make_unique<{}>(nullptr{});
+        return std::make_unique<{class_name}>(nullptr{});
     }}
 
-    {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
+    {class_name} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {class_name} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
 """
-    class_name = method.attrib['name'] + 'Finish'
+    method_name = method.attrib['name']
+    class_name = method_name + 'Finish'
     members_finish = _mk_argument_list(method, True,
                                        _map_simple_type_to_memtype,
                                        need_return_types=True,
@@ -723,29 +733,39 @@ class {}: public Expectation
         _mk_cleanup_statements(method, True, need_return_types=True)
     checks = _mk_copy_statements(method, True, need_return_types=True)
     print(template_finish.format(
-            iface_name + '.' + method.attrib['name'], class_name,
+            # class members
             _format_string_list(members_finish, 4, terminator=';'),
-            class_name,
+
+            # ctor
             _format_string_list(ctor_args, 0, leading_indent=False),
-            class_name,
             _format_string_list(ctor_init, 8, leading_sep=','),
-            class_name,
+
+            # dtor
             _format_string_list(cleanup_statements, 8, terminator=';'),
-            iface_type,
+
+            # check()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            class_name, iface_type,
+
+            # make_from_check_parameters()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            class_name,
             _format_string_list(ctor_call_args, 0, leading_sep=', ',
                                 leading_indent=False),
-            class_name, class_name, out_code_fn),
+
+            # extra code
+            out_code_fn,
+
+            # assigned by keyword
+            method_name=method_name,
+            class_name=class_name,
+            iface_type=iface_type,
+            iface_name=iface_name),
           file=hhfile)
 
-    template_sync = """// Expecting sync method invocation: {}
-class {}: public Expectation
+    template_sync = """// Expecting sync method invocation: {iface_name}.{method_name}
+class {class_name}: public Expectation
 {{
   private:
     GError *dbus_call_error_;{}{}
@@ -753,11 +773,11 @@ class {}: public Expectation
   public:
     GCancellable *observed_cancellable_;
 
-    explicit {}({}):
-        Expectation("{}"){}
+    explicit {class_name}({}):
+        Expectation("{class_name}"){}
     {{}}
 
-    ~{}()
+    ~{class_name}()
     {{
         if(observed_cancellable_ != nullptr)
             g_object_unref(observed_cancellable_);
@@ -765,7 +785,7 @@ class {}: public Expectation
         dbus_call_error_ = nullptr;{}
     }}
 
-    gboolean check({} *proxy{}, GCancellable *cancellable, GError **error)
+    gboolean check({iface_type} *proxy{}, GCancellable *cancellable, GError **error)
     {{
         CHECK(proxy == proxy_pointer(pp_offset_));
         if(cancellable != nullptr)
@@ -783,16 +803,17 @@ class {}: public Expectation
         return TRUE;
     }}
 
-    static std::unique_ptr<{}> make_from_check_parameters({} *{}, GCancellable *, GError **)
+    static std::unique_ptr<{class_name}> make_from_check_parameters({iface_type} *{}, GCancellable *, GError **)
     {{
-        return std::make_unique<{}>(nullptr{});
+        return std::make_unique<{class_name}>(nullptr{});
     }}
 
-    {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
+    {class_name} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {class_name} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
 """
-    class_name = method.attrib['name'] + 'Sync'
+    method_name = method.attrib['name']
+    class_name = method_name + 'Sync'
     ctor_args = ['GError *dbus_call_error']
     ctor_args += _mk_argument_list(method, True, _map_simple_type_to_ctortype)
     ctor_args += _mk_argument_list(method, True, _map_simple_type_to_ctortype,
@@ -819,58 +840,67 @@ class {}: public Expectation
     checks = _mk_check_statements(method, True)
     checks += _mk_copy_statements(method, True, need_return_types=True)
     print(template_sync.format(
-            iface_name + '.' + method.attrib['name'], class_name,
+            # class members
             _format_string_list(members_async, 4, terminator=';'),
             _format_string_list(members_finish, 4, terminator=';'),
-            class_name,
+
+            # ctor
             _format_string_list(ctor_args, 0, leading_indent=False),
-            class_name,
             _format_string_list(ctor_init, 8, leading_sep=','),
-            class_name,
+
+            # dtor
             _format_string_list(cleanup_statements, 8, terminator=';'),
-            iface_type,
+
+            # check()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
 
-            class_name, iface_type,
+            # make_from_check_parameters()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            class_name,
             _format_string_list(ctor_call_args, 0,
                                 leading_sep=', ', leading_indent=False),
 
-            class_name, class_name, sync_code_fn),
+            # extra code
+            sync_code_fn,
+
+            # assigned by keyword
+            method_name=method_name,
+            class_name=class_name,
+            iface_type=iface_type,
+            iface_name=iface_name),
           file=hhfile)
 
-    template_complete = """// Expecting async method completion: {}
-class {}: public Expectation
+    template_complete = """// Expecting async method completion: {iface_name}.{method_name}
+class {class_name}: public Expectation
 {{
   private:{}
 
   public:
-    explicit {}({}):
-        Expectation("{}"){}
+    explicit {class_name}({}):
+        Expectation("{class_name}"){}
     {{}}
 
-    ~{}()
+    ~{class_name}()
     {{""""""{}
     }}
 
-    void check({} *object, GDBusMethodInvocation *invocation{})
+    void check({iface_type} *object, GDBusMethodInvocation *invocation{})
     {{
         CHECK(object == proxy_pointer(pp_offset_));
         CHECK(invocation == invocation_pointer(ip_offset_));{}
-    }}{}
-
-    static std::unique_ptr<{}> make_from_check_parameters({} *, GDBusMethodInvocation *{})
-    {{
-        return std::make_unique<{}>({});
     }}
 
+    static std::unique_ptr<{class_name}> make_from_check_parameters({iface_type} *, GDBusMethodInvocation *{})
+    {{
+        return std::make_unique<{class_name}>({});
+    }}
+{}
 }};
 """
-    class_name = method.attrib['name'] + 'Complete'
+    method_name = method.attrib['name']
+    class_name = method_name + 'Complete'
     members_complete = _mk_argument_list(method, True,
                                          _map_simple_type_to_memtype,
                                          need_return_types=True,
@@ -895,53 +925,61 @@ class {}: public Expectation
     checks = _mk_check_statements(method, True, need_return_types=True,
                                   need_prefixed_names=False)
     print(template_complete.format(
-            iface_name + '.' + method.attrib['name'], class_name,
+            # class members
             _format_string_list(members_complete, 4, terminator=';'),
-            class_name,
+
+            # ctor
             _format_string_list(ctor_args, 0, leading_indent=False),
-            class_name,
             _format_string_list(ctor_init, 8, leading_sep=','),
-            class_name,
+
+            # dtor
             _format_string_list(cleanup_statements, 8, terminator=';'),
-            iface_type,
+
+            # check()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            complete_code_fn,
 
-            class_name, iface_type,
+            # make_from_check_parameters()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            class_name,
             _format_string_list(ctor_call_args, 0, leading_indent=False),
-            ),
+
+            # extra code
+            complete_code_fn,
+
+            # assigned by keyword
+            method_name=method_name,
+            class_name=class_name,
+            iface_type=iface_type,
+            iface_name=iface_name),
           file=hhfile)
 
 
 def _write_signal_emit_expectation(hhfile, iface_name, iface_name_stripped,
                                    iface_type, signal):
-    template = """// Expecting signal emission: {}
-class {}: public Expectation
+    template = """// Expecting signal emission: {iface_name}.{class_name}
+class {class_name}: public Expectation
 {{""""""
    private:{}
 
    public:
-    explicit {}({}):
-        Expectation("{}"){}
+    explicit {class_name}({}):
+        Expectation("{class_name}"){}
     {{}}
 
-    void check({} *object{})
+    void check({iface_type} *object{})
     {{
         CHECK(object == proxy_pointer(pp_offset_));{}
     }}
 
-    static std::unique_ptr<{}> make_from_check_parameters({} *{})
+    static std::unique_ptr<{class_name}> make_from_check_parameters({iface_type} *{})
     {{
-        return std::make_unique<{}>({});
+        return std::make_unique<{class_name}>({});
     }}
 
-    {} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
+    {class_name} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {class_name} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
 }};
 """
     class_name = signal.attrib['name']
@@ -964,22 +1002,30 @@ class {}: public Expectation
     code = _gen_get_details_fn(code)
 
     print(template.format(
-            iface_name + '.' + class_name, class_name,
+            # class members
             _format_string_list(members, 4, terminator=';'),
-            class_name,
+
+            # ctor
             _format_string_list(ctor_args, 0, leading_indent=False),
-            class_name,
             _format_string_list(ctor_init, 8, leading_sep=','),
-            iface_type,
+
+            # check()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-            class_name, iface_type,
+
+            # make_from_check_parameters()
             _format_string_list(check_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            class_name,
             _format_string_list(ctor_call_args, 0, leading_indent=False),
-            class_name, class_name, code),
+
+            # extra code
+            code,
+
+            # assigned by keyword
+            class_name=class_name,
+            iface_type=iface_type,
+            iface_name=iface_name),
           file=hhfile)
 
 
@@ -993,7 +1039,7 @@ static constexpr unsigned long METHOD_INVOCATION_PATTERN = {};
 
 static inline auto *proxy_pointer(unsigned long offset = 0)
 {{
-    return reinterpret_cast<{} *>(PROXY_POINTER_PATTERN + offset);
+    return reinterpret_cast<{iface_type} *>(PROXY_POINTER_PATTERN + offset);
 }}
 
 static inline GAsyncResult *async_result_pointer(unsigned long offset = 0)
@@ -1006,26 +1052,26 @@ static inline GDBusMethodInvocation *invocation_pointer(unsigned long offset = 0
     return reinterpret_cast<GDBusMethodInvocation *>(METHOD_INVOCATION_PATTERN + offset);
 }}
 
-static inline std::unique_ptr<TDBus::Proxy<{}>>
+static inline std::unique_ptr<TDBus::Proxy<{iface_type}>>
 make_unique_proxy(
-        std::string &&name = "{}",
-        std::string &&path = "{}",
+        std::string &&name = "{dbus_name}",
+        std::string &&path = "{dbus_path}",
         unsigned long offset = 0)
 {{
-    return std::make_unique<TDBus::Proxy<{}>>(TDBus::Proxy<{}>::make_proxy_for_testing(
+    return std::make_unique<TDBus::Proxy<{iface_type}>>(TDBus::Proxy<{iface_type}>::make_proxy_for_testing(
             std::move(name), std::move(path),
             PROXY_POINTER_PATTERN + offset));
 }}
 
-static inline TDBus::Iface<{}> &get_exported_dummy_iface()
+static inline TDBus::Iface<{iface_type}> &get_exported_dummy_iface()
 {{
-    using IfaceType = {};
+    using IfaceType = {iface_type};
     struct Traits {{ static IfaceType *skeleton_new() {{ return reinterpret_cast<IfaceType *>(IFACE_POINTER_PATTERN); }} }};
-    static TDBus::Iface<IfaceType, Traits> iface("{}", true);
+    static TDBus::Iface<IfaceType, Traits> iface("{dbus_path}", true);
     return reinterpret_cast<TDBus::Iface<IfaceType> &>(iface);
 }}
 
-/*! Base class for {} expectations. */
+/*! Base class for {cpp_namespace} expectations. */
 class Expectation: public MockExpectationBase
 {{
   protected:
@@ -1049,7 +1095,7 @@ class Mock: public MockBase
     Mock &operator=(const Mock &) = delete;
 
     explicit Mock(std::shared_ptr<MockExpectationSequence> eseq = nullptr):
-        MockBase("{}", eseq)
+        MockBase("{cpp_namespace}", eseq)
     {{}}
 
     ~Mock() {{}}
@@ -1093,11 +1139,13 @@ class Mock: public MockBase
     print(template.format(dummy_pointer_value,
                           hex(int(dummy_pointer_value, 0) + 1),
                           hex(int(dummy_pointer_value, 0) + 2),
-                          iface_type,
-                          iface_type, dbus_name, dbus_path,
-                          iface_type, iface_type,
-                          iface_type, iface_type, dbus_path,
-                          cpp_namespace, cpp_namespace),
+
+                          # assigned by keyword
+                          dbus_name=dbus_name,
+                          dbus_path=dbus_path,
+                          iface_type=iface_type,
+                          iface_name=iface_name,
+                          cpp_namespace=cpp_namespace),
           file=hhfile)
 
     for method in iface.findall('method'):
@@ -1146,19 +1194,34 @@ def _mk_call_parameter_list(params, is_method, *, need_return_types=False,
 def _write_method_call_mocks(ccfile, iface_name, iface_type, cpp_namespace,
                              fn_prefix, method):
     template = """
-// Mock functions for method call: {}
-void {}({} *proxy{}, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data)
+// Mock functions for method call: {iface_name}.{method_name}
+void {}({iface_type} *proxy{}, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data)
 {{
-    REQUIRE({}::singleton != nullptr);
-    {}::singleton->check_next<{}::{}>(proxy, cancellable, callback, user_data{});
+    REQUIRE({cpp_namespace}::singleton != nullptr);
+    {cpp_namespace}::singleton->check_next<{cpp_namespace}::{method_name}>(proxy, cancellable, callback, user_data{});
 }}
 
-gboolean {}({} *proxy{}, GAsyncResult *res, GError **error)
+gboolean {}({iface_type} *proxy{}, GAsyncResult *res, GError **error)
 {{
-    REQUIRE({}::singleton != nullptr);
-    CHECK(res == {}::async_result_pointer());
-    return {}::singleton->check_next<{}::{}>(proxy{}, res, error);
-}}"""
+    REQUIRE({cpp_namespace}::singleton != nullptr);
+    CHECK(res == {cpp_namespace}::async_result_pointer());
+    return {cpp_namespace}::singleton->check_next<{cpp_namespace}::{method_name}Finish>(proxy{}, res, error);
+}}
+
+gboolean {}({iface_type} *proxy{}{}, GCancellable *cancellable, GError **error)
+{{
+    REQUIRE({cpp_namespace}::singleton != nullptr);
+    return {cpp_namespace}::singleton->check_next<{cpp_namespace}::{method_name}Sync>(proxy{}{}, cancellable, error);
+}}
+
+void {}({iface_type} *object, GDBusMethodInvocation *invocation{})
+{{
+    REQUIRE({cpp_namespace}::singleton != nullptr);
+    REQUIRE(object != nullptr);
+    return {cpp_namespace}::singleton->check_next<{cpp_namespace}::{method_name}Complete>(object, invocation{});
+}}
+"""
+    method_name = method.attrib['name']
     call_fn_args = _mk_argument_list(method, True, _map_simple_type_to_ctype)
     call_forward_args = _mk_call_parameter_list(method, True)
     finish_fn_args = _mk_argument_list(method, True,
@@ -1166,61 +1229,6 @@ gboolean {}({} *proxy{}, GAsyncResult *res, GError **error)
                                        need_return_types=True)
     finish_forward_args = _mk_call_parameter_list(method, True,
                                                   need_return_types=True)
-    print(template.format(
-            iface_name + '.' + method.attrib['name'],
-            _method_name(fn_prefix,
-                         'call_' + _to_snake_case(method.attrib['name'])),
-            iface_type,
-            _format_string_list(call_fn_args, 0,
-                                leading_sep=', ', leading_indent=False),
-            cpp_namespace, cpp_namespace, cpp_namespace, method.attrib['name'],
-            _format_string_list(call_forward_args, 0,
-                                leading_sep=', ', leading_indent=False),
-
-            _method_name(fn_prefix,
-                         'call_' + _to_snake_case(method.attrib['name']) +
-                         '_finish'),
-            iface_type,
-            _format_string_list(finish_fn_args, 0,
-                                leading_sep=', ', leading_indent=False),
-            cpp_namespace, cpp_namespace, cpp_namespace, cpp_namespace,
-            method.attrib['name'] + 'Finish',
-            _format_string_list(finish_forward_args, 0,
-                                leading_sep=', ', leading_indent=False)),
-          file=ccfile)
-
-    template = """
-gboolean {}({} *proxy{}{}, GCancellable *cancellable, GError **error)
-{{
-    REQUIRE({}::singleton != nullptr);
-    return {}::singleton->check_next<{}::{}>(proxy{}{}, cancellable, error);
-}}"""
-
-    print(template.format(
-            _method_name(fn_prefix,
-                         'call_' + _to_snake_case(method.attrib['name']) +
-                         '_sync'),
-            iface_type,
-            _format_string_list(call_fn_args, 0,
-                                leading_sep=', ', leading_indent=False),
-            _format_string_list(finish_fn_args, 0,
-                                leading_sep=', ', leading_indent=False),
-            cpp_namespace, cpp_namespace, cpp_namespace,
-            method.attrib['name'] + 'Sync',
-            _format_string_list(call_forward_args, 0,
-                                leading_sep=', ', leading_indent=False),
-            _format_string_list(finish_forward_args, 0,
-                                leading_sep=', ', leading_indent=False)),
-          file=ccfile)
-
-    template = """
-void {}({} *object, GDBusMethodInvocation *invocation{})
-{{
-    REQUIRE({}::singleton != nullptr);
-    REQUIRE(object != nullptr);
-    return {}::singleton->check_next<{}::{}>(object, invocation{});
-}}
-"""
     complete_fn_args = _mk_argument_list(method, True,
                                          _map_simple_type_to_ctype,
                                          need_return_types=True,
@@ -1229,65 +1237,101 @@ void {}({} *object, GDBusMethodInvocation *invocation{})
                                                     need_return_types=True,
                                                     need_prefixed_names=False)
     print(template.format(
+            # call_...()
+            _method_name(fn_prefix,
+                         'call_' + _to_snake_case(method.attrib['name'])),
+            _format_string_list(call_fn_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(call_forward_args, 0,
+                                leading_sep=', ', leading_indent=False),
+
+            # call_..._finish()
+            _method_name(fn_prefix,
+                         'call_' + _to_snake_case(method.attrib['name']) +
+                         '_finish'),
+            _format_string_list(finish_fn_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(finish_forward_args, 0,
+                                leading_sep=', ', leading_indent=False),
+
+            # call_..._sync()
+            _method_name(fn_prefix,
+                         'call_' + _to_snake_case(method.attrib['name']) +
+                         '_sync'),
+            _format_string_list(call_fn_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(finish_fn_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(call_forward_args, 0,
+                                leading_sep=', ', leading_indent=False),
+            _format_string_list(finish_forward_args, 0,
+                                leading_sep=', ', leading_indent=False),
+
+            # complete_...()
             _method_name(fn_prefix,
                          'complete_' + _to_snake_case(method.attrib['name'])),
-            iface_type,
             _format_string_list(complete_fn_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            cpp_namespace, cpp_namespace, cpp_namespace,
-            method.attrib['name'] + 'Complete',
             _format_string_list(complete_forward_args, 0,
-                                leading_sep=', ', leading_indent=False)),
+                                leading_sep=', ', leading_indent=False),
+
+            # assigned by keyword
+            method_name=method_name,
+            iface_type=iface_type,
+            iface_name=iface_name,
+            cpp_namespace=cpp_namespace),
           file=ccfile)
 
 
 def _write_signal_emit_mocks(ccfile, iface_name, iface_type, cpp_namespace,
                              fn_prefix, signal):
     template = """
-// Mock function for signal: {}
-void {}({} *object{})
+// Mock function for signal: {iface_name}.{signal_name}
+void {}({iface_type} *object{})
 {{
-    REQUIRE({}::singleton != nullptr);
+    REQUIRE({cpp_namespace}::singleton != nullptr);
     REQUIRE(object != nullptr);
-    return {}::singleton->check_next<{}::{}>(object{});
+    return {cpp_namespace}::singleton->check_next<{cpp_namespace}::{signal_name}>(object{});
 }}"""
     call_fn_args = _mk_argument_list(signal, False, _map_simple_type_to_ctype)
     call_forward_args = _mk_call_parameter_list(signal, False)
 
     print(template.format(
-            iface_name + '.' + signal.attrib['name'],
             _method_name(fn_prefix,
                          'emit_' + _to_snake_case(signal.attrib['name'])),
-            iface_type,
             _format_string_list(call_fn_args, 0,
                                 leading_sep=', ', leading_indent=False),
-            cpp_namespace, cpp_namespace, cpp_namespace,
-            signal.attrib['name'],
             _format_string_list(call_forward_args, 0,
-                                leading_sep=', ', leading_indent=False)),
+                                leading_sep=', ', leading_indent=False),
+
+            # assigned by keyword
+            signal_name=signal.attrib['name'],
+            iface_type=iface_type,
+            iface_name=iface_name,
+            cpp_namespace=cpp_namespace),
           file=ccfile)
 
 
 def _write_impl_body(ccfile, iface_prefix, c_namespace, cpp_namespace, iface):
     template = """template <>
-TDBus::Proxy<{}> &TDBus::get_singleton()
+TDBus::Proxy<{iface_type}> &TDBus::get_singleton()
 {{
-    static auto proxy(TDBus::Proxy<{}>::make_proxy_for_testing(
-            "{}",
-            "{}",
-            {}::PROXY_POINTER_PATTERN));
+    static auto proxy(TDBus::Proxy<{iface_type}>::make_proxy_for_testing(
+            "{dbus_name}",
+            "{dbus_path}",
+            {cpp_namespace}::PROXY_POINTER_PATTERN));
     return proxy;
 }}
 
-{}::Mock *{}::singleton = nullptr;"""
+{cpp_namespace}::Mock *{cpp_namespace}::singleton = nullptr;"""
     iface_name = iface.attrib['name']
     iface_name_stripped = _remove_prefix(iface_name, iface_prefix)
     iface_type = c_namespace.replace('_', '') + iface_name_stripped
     dbus_name = 'unittests.' + iface_name
-    print(template.format(
-            iface_type, iface_type,
-            dbus_name, '/' + dbus_name.replace('.', '/'),
-            cpp_namespace, cpp_namespace, cpp_namespace),
+    print(template.format(dbus_name=dbus_name,
+                          dbus_path='/' + dbus_name.replace('.', '/'),
+                          iface_type=iface_type,
+                          cpp_namespace=cpp_namespace),
           file=ccfile)
 
     fn_prefix = c_namespace + '_' + _to_snake_case(iface_name_stripped)
