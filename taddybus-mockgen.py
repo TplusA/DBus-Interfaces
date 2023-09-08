@@ -958,28 +958,72 @@ class {class_name}: public Expectation
 
 def _write_signal_emit_expectation(hhfile, iface_name, iface_name_stripped,
                                    iface_type, signal):
-    template = """// Expecting signal emission: {iface_name}.{class_name}
-class {class_name}: public Expectation
-{{""""""
-   private:{}
-
-   public:
-    explicit {class_name}({}):
-        Expectation("{class_name}"){}
+    template = """// Base class for signal emission: {iface_name}.{class_name}
+class {class_name}Base: public Expectation
+{{
+  public:
+    explicit {class_name}Base(std::string &&name):
+       Expectation(std::move(name))
     {{}}
 
-    void check({iface_type} *object{})
+    virtual void check({check_params}) = 0;
+
+    static std::unique_ptr<{class_name}Base> make_from_check_parameters({check_params});
+
+    {class_name}Base &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {class_name}Base &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
+}};
+
+// Expecting signal emission: {iface_name}.{class_name}
+class {class_name}: public {class_name}Base
+{{""""""
+  private:{}
+
+  public:
+    explicit {class_name}({}):
+        {class_name}Base("{class_name}"){}
+    {{}}
+
+    void check({check_params}) override
     {{
         CHECK(object == proxy_pointer(pp_offset_));{}
     }}
+{}
+}};
 
-    static std::unique_ptr<{class_name}> make_from_check_parameters({iface_type} *{})
+// Expecting signal emission: {iface_name}.{class_name}
+class {class_name_ext}: public {class_name}Base
+{{
+  private:
+    std::function<void({iface_type} *object{})> check_full_fn_;
+    std::function<void()> check_simple_fn_;
+
+  public:
+    explicit {class_name_ext}(std::nullptr_t):
+        {class_name}Base("{class_name_ext} (ignored)")
+    {{}}
+
+    explicit {class_name_ext}(std::function<void({iface_type} *object{})> &&check_full_fn):
+        {class_name}Base("{class_name_ext} (full)"),
+        check_full_fn_(std::move(check_full_fn))
+    {{}}
+
+    explicit {class_name_ext}(std::function<void()> &&check_simple_fn):
+        {class_name}Base("{class_name_ext} (simple)"),
+        check_simple_fn_(std::move(check_simple_fn))
+    {{}}
+
+    void check({check_params}) override
     {{
-        return std::make_unique<{class_name}>({});
+        CHECK(object == proxy_pointer(pp_offset_));
+        if(check_simple_fn_ != nullptr)
+            check_simple_fn_();
+        if(check_full_fn_ != nullptr)
+            check_full_fn_(object{});
     }}
 
-    {class_name} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
-    {class_name} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}{}
+    {class_name_ext} &set_proxy_index(unsigned long idx) {{ pp_offset_ = idx; return *this; }}
+    {class_name_ext} &set_invocation_index(unsigned long idx) {{ ip_offset_ = idx; return *this; }}
 }};
 """
     class_name = signal.attrib['name']
@@ -988,6 +1032,7 @@ class {class_name}: public Expectation
                                 append_to_name='_')
     ctor_args = _mk_argument_list(signal, False, _map_simple_type_to_ctortype)
     check_args = _mk_argument_list(signal, False, _map_simple_type_to_ctype)
+    check_ext_args = _mk_argument_list(signal, False, _map_simple_type_to_ctortype)
     ctor_init = _mk_initializer_list(signal, False)
     ctor_call_args = _mk_argument_list(signal, False,
                                        _map_simple_type_to_conversion,
@@ -1002,7 +1047,7 @@ class {class_name}: public Expectation
     code = _gen_get_details_fn(code)
 
     print(template.format(
-            # class members
+            # class members of automatically checked expectation
             _format_string_list(members, 4, terminator=';'),
 
             # ctor
@@ -1010,22 +1055,31 @@ class {class_name}: public Expectation
             _format_string_list(ctor_init, 8, leading_sep=','),
 
             # check()
-            _format_string_list(check_args, 0,
-                                leading_sep=', ', leading_indent=False),
             _format_string_list(checks, 8, terminator=';'),
-
-            # make_from_check_parameters()
-            _format_string_list(check_args, 0,
-                                leading_sep=', ', leading_indent=False),
-            _format_string_list(ctor_call_args, 0, leading_indent=False),
 
             # extra code
             code,
 
+
+            # class members of manually checked expectation
+            _format_string_list(check_ext_args, 0,
+                                leading_sep=', ', leading_indent=False),
+
+            # ctors
+            _format_string_list(check_ext_args, 0,
+                                leading_sep=', ', leading_indent=False),
+
+            # check()
+            _format_string_list(ctor_call_args, 0,
+                                leading_sep=', ', leading_indent=False),
+
             # assigned by keyword
             class_name=class_name,
+            class_name_ext=class_name + "WithExtCheck",
             iface_type=iface_type,
-            iface_name=iface_name),
+            iface_name=iface_name,
+            check_params=iface_type + ' *object' + _format_string_list(
+                check_args, 0, leading_sep=', ', leading_indent=False)),
           file=hhfile)
 
 
@@ -1088,6 +1142,19 @@ class Expectation: public MockExpectationBase
     virtual ~Expectation() {{}}
 }};
 
+
+/*! Base class for {cpp_namespace} expectations with external check function. */
+class ExpectationWithExtCheck: public Expectation
+{{
+  public:
+    ExpectationWithExtCheck(std::string &&name):
+        Expectation(std::move(name))
+    {{}}
+
+    virtual ~ExpectationWithExtCheck() {{}}
+}};
+
+/*! Mock for {cpp_namespace} expectations */
 class Mock: public MockBase
 {{
   public:
@@ -1291,12 +1358,23 @@ void {}({iface_type} *object{})
 {{
     REQUIRE({cpp_namespace}::singleton != nullptr);
     REQUIRE(object != nullptr);
-    return {cpp_namespace}::singleton->check_next<{cpp_namespace}::{signal_name}>(object{});
+    return {cpp_namespace}::singleton->check_next<{cpp_namespace}::{signal_name}Base>(object{});
+}}
+
+std::unique_ptr<{cpp_namespace}::{class_name}Base> {cpp_namespace}::{class_name}Base::make_from_check_parameters({})
+{{
+    return std::make_unique<{class_name}>({});
 }}"""
+    class_name = signal.attrib['name']
     call_fn_args = _mk_argument_list(signal, False, _map_simple_type_to_ctype)
     call_forward_args = _mk_call_parameter_list(signal, False)
+    check_args = _mk_argument_list(signal, False, _map_simple_type_to_ctype)
+    ctor_call_args = _mk_argument_list(signal, False,
+                                       _map_simple_type_to_conversion,
+                                       need_types=False)
 
     print(template.format(
+            # mock function
             _method_name(fn_prefix,
                          'emit_' + _to_snake_case(signal.attrib['name'])),
             _format_string_list(call_fn_args, 0,
@@ -1304,7 +1382,13 @@ void {}({iface_type} *object{})
             _format_string_list(call_forward_args, 0,
                                 leading_sep=', ', leading_indent=False),
 
+            # make_from_check_parameters()
+            iface_type + ' *object' + _format_string_list(
+                check_args, 0, leading_sep=', ', leading_indent=False),
+            _format_string_list(ctor_call_args, 0, leading_indent=False),
+
             # assigned by keyword
+            class_name=class_name,
             signal_name=signal.attrib['name'],
             iface_type=iface_type,
             iface_name=iface_name,
