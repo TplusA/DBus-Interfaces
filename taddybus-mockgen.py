@@ -536,7 +536,7 @@ class {class_name}: public Expectation
         async_ready_ignored_(false){}
     {{}}
 
-    ~{class_name}()
+    virtual ~{class_name}()
     {{
         if(observed_cancellable_ != nullptr)
             g_object_unref(observed_cancellable_);{}
@@ -677,7 +677,7 @@ class {class_name}: public Expectation
         Expectation("{class_name}"){}
     {{}}
 
-    ~{class_name}()
+    virtual ~{class_name}()
     {{
         if(dbus_call_error_ != nullptr) g_error_free(dbus_call_error_);
         dbus_call_error_ = nullptr;{}
@@ -777,7 +777,7 @@ class {class_name}: public Expectation
         Expectation("{class_name}"){}
     {{}}
 
-    ~{class_name}()
+    virtual ~{class_name}()
     {{
         if(observed_cancellable_ != nullptr)
             g_object_unref(observed_cancellable_);
@@ -882,7 +882,7 @@ class {class_name}: public Expectation
         Expectation("{class_name}"){}
     {{}}
 
-    ~{class_name}()
+    virtual ~{class_name}()
     {{""""""{}
     }}
 
@@ -1165,7 +1165,7 @@ class Mock: public MockBase
         MockBase("{cpp_namespace}", eseq)
     {{}}
 
-    ~Mock() {{}}
+    virtual ~Mock() {{}}
 
     void expect(std::unique_ptr<Expectation> expectation)
     {{
