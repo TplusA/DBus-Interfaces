@@ -1187,13 +1187,15 @@ class Mock: public MockBase
     template <typename T>
     void ignore(std::unique_ptr<Expectation> default_result)
     {{
-        ignore<T>(std::move(default_result));
+        static_assert(std::is_base_of_v<Expectation, T> == true);
+        MockBase::ignore<T>(std::move(default_result));
     }}
 
     template <typename T>
     void ignore(Expectation *default_result)
     {{
-        ignore<T>(std::unique_ptr<Expectation>(default_result));
+        static_assert(std::is_base_of_v<Expectation, T> == true);
+        MockBase::ignore<T>(std::unique_ptr<Expectation>(default_result));
     }}
 }};
 
