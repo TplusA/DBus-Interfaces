@@ -106,12 +106,15 @@ def _mk_c_argument_list(params, is_method):
 
         argname = 'arg_' + param.attrib['name']
         type = None
+        is_array = False
+        is_forced_gvariant = False
 
         for anno in param.findall('annotation'):
             if anno.attrib['name'] == 'org.gtk.GDBus.C.ForceGVariant' and \
                     anno.attrib['value'] == 'arg':
                 type = param.attrib['type']
                 is_array = True
+                is_forced_gvariant = True
                 break
 
         if not type:
@@ -119,7 +122,14 @@ def _mk_c_argument_list(params, is_method):
             is_array = type[0] == 'a'
 
         if is_array:
-            t = _simple_type_to_ctype('v') + argname + ' /* ' + type + ' */'
+            if is_forced_gvariant or type[1:] not in ('s', 'o', 'y', 'ay'):
+                t = _simple_type_to_ctype('v') + argname + ' /* ' + type + ' */'
+            else:
+                if type[1] == 'y':
+                    t = ''
+                else:
+                    t = 'const *'
+                t = _simple_type_to_ctype('s') + t + argname
         else:
             t = _simple_type_to_ctype(type[0])
             t += argname
