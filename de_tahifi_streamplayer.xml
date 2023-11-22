@@ -162,6 +162,62 @@
         </method>
 
         <!--
+        Check if given stream is playable.
+
+        This method can be used to weed out unplayable streams early, or to
+        find the first playable stream without having to go through the
+        player's gapless queue. Note that the player will probe each stream
+        anyway and drop unplayable ones as early as possible. Use manual
+        stream probing only for special cases such as searching for a good
+        stream when skipping over a stretch of unplayable streams.
+
+        The method may be called at any time, even while the player is
+        playing. The method will run at very low priority so that system
+        overload by stream probing, and thus stuttering or bad response times,
+        is avoided as much as possible.
+
+        \param arg_stream_urls
+            Collection URIs belonging to the same logical stream.
+            See \p arg_stream_urls in \c de.tahifi.Streamplayer.URLFIFO.Push.
+
+        \param out_cookie
+            Returns 0 if the result is valid, otherwise the result must be
+            retrieved by this cookie with a call of
+            \c de.tahifi.Streamplayer.URLFIFO.ProbeByCookie after
+            \c de.tahifi.Streamplayer.URLFIFO.DataAvailable or
+            \c de.tahifi.Streamplayer.URLFIFO.DataError have been emitted.
+
+        \param out_fail_reason
+            If this array is empty, then at least one of the given URIs can be
+            played; otherwise, each entry in the array contains the reason why
+            the corresponding URL cannot be played (frequently, all of them
+            will be the same).
+
+            Note that probing stops at the first successful URI, in which case
+            no fail reasons are returned. That is, the array is always either
+            empty, or contains as many entries as \p arg_stream_urls.
+        -->
+        <method name="Probe">
+            <arg name="stream_urls" type="a(sb)" direction="in">
+                <mock_check_fn name="MockDBusUtils::expect_pushed_stream_uris"/>
+            </arg>
+            <arg name="cookie" type="u" direction="out"/>
+            <arg name="fail_reasons" type="as" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+        </method>
+
+        <!--
+        Retrieval of \c de.tahifi.Streamplayer.URLFIFO.Probe results.
+        -->
+        <method name="ProbeByCookie">
+            <arg name="cookie" type="u" direction="in"/>
+            <arg name="fail_reasons" type="as" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+        </method>
+
+        <!--
         Emitted when the player has removed a stream from the queue before it
         started playing.
 
@@ -187,6 +243,28 @@
         <signal name="Dropped">
             <arg name="id" type="q"/>
             <arg name="reason" type="s"/>
+        </signal>
+
+        <!--
+        Report availability of requested data.
+
+        Multiple requests may complete at roughly the same time, and their
+        completion may be collectively reported in a single signal. The data
+        cookies may be used to retrieve the associated results.
+        -->
+        <signal name="DataAvailable">
+            <arg name="cookies" type="au"/>
+        </signal>
+
+        <!--
+        Report error for requested data.
+
+        Multiple requests may error out at roughly the same time (think network
+        trouble), and their errors may be collectively reported in a single
+        signal. The data cookies sent along are invalidated by this signal.
+        -->
+        <signal name="DataError">
+            <arg name="errors" type="a(uy)"/>
         </signal>
     </interface>
 
