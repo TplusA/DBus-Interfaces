@@ -340,6 +340,14 @@ def _mk_initializer_list(params, is_method, *, need_return_types=False,
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
+        is_forced_type = False
+
+        for anno in param.findall('annotation'):
+            if anno.attrib['name'] == 'org.gtk.GDBus.C.ForceGVariant' and \
+                    anno.attrib['value'] == 'arg':
+                is_forced_type = True
+                break
+
         if need_prefixed_names:
             argname = 'out_' if need_return_types else 'arg_'
         else:
@@ -347,7 +355,7 @@ def _mk_initializer_list(params, is_method, *, need_return_types=False,
 
         argname += param.attrib['name']
 
-        if _type_is_gvariant(param):
+        if is_forced_type or _type_is_gvariant(param):
             statements.append(argname + '_(std::move(g_variant_ref_sink(' +
                               argname + ')))')
         else:
@@ -364,6 +372,19 @@ def _mk_cleanup_statements(params, is_method, *, need_return_types,
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
+        type = None
+        is_forced_type = False
+
+        for anno in param.findall('annotation'):
+            if anno.attrib['name'] == 'org.gtk.GDBus.C.ForceGVariant' and \
+                    anno.attrib['value'] == 'arg':
+                type = param.attrib['type']
+                is_forced_type = True
+                break
+
+        if not is_forced_type:
+            type = param.attrib['type']
+
         if need_return_types and _type_is_pointer(param) and \
                 not _type_is_string(param):
             if need_prefixed_names:
@@ -371,7 +392,7 @@ def _mk_cleanup_statements(params, is_method, *, need_return_types,
             else:
                 argname = param.attrib['name']
 
-            if _type_is_string_array(param):
+            if not is_forced_type and type == 'as':
                 statements.append(argname + '_.clear()')
             else:
                 statements.append('if(' + argname + '_ != nullptr) '
@@ -398,6 +419,19 @@ def _mk_check_statements(params, is_method, *, need_return_types=False,
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
+        type = None
+        is_forced_type = False
+
+        for anno in param.findall('annotation'):
+            if anno.attrib['name'] == 'org.gtk.GDBus.C.ForceGVariant' and \
+                    anno.attrib['value'] == 'arg':
+                type = param.attrib['type']
+                is_forced_type = True
+                break
+
+        if not is_forced_type:
+            type = param.attrib['type']
+
         if need_prefixed_names:
             argname = 'out_' if need_return_types else 'arg_'
         else:
@@ -415,7 +449,7 @@ def _mk_check_statements(params, is_method, *, need_return_types=False,
                 statements.append(
                     'else if(!' + argname + '_.empty()) CHECK(' +
                     argname + ' != nullptr)')
-            elif _type_is_string_array(param):
+            elif not is_forced_type and _type_is_string_array(param):
                 statements.append(
                     'if(' + argname + '_.empty() && ' + argname +
                     ' != nullptr && ' + argname +
@@ -473,6 +507,8 @@ def _mk_check_statements(params, is_method, *, need_return_types=False,
         elif _type_is_float(param):
             statements.append('CHECK(' + argname + ' <= ' + argname + '_)')
             statements.append('CHECK(' + argname + ' >= ' + argname + '_)')
+        elif is_forced_type and type == 'as':
+            statements.append('if(' + argname + ' != nullptr) CHECK(g_variant_equal(' + argname + ', ' + argname + '_))')
         elif not _type_is_string_array(param):
             statements.append('CHECK(' + argname + ' == ' + argname + '_)')
 
@@ -487,6 +523,19 @@ def _mk_copy_statements(params, is_method, *, need_return_types=False,
         if _skip_parameter(param, is_method, need_return_types):
             continue
 
+        type = None
+        is_forced_type = False
+
+        for anno in param.findall('annotation'):
+            if anno.attrib['name'] == 'org.gtk.GDBus.C.ForceGVariant' and \
+                    anno.attrib['value'] == 'arg':
+                type = param.attrib['type']
+                is_forced_type = True
+                break
+
+        if not is_forced_type:
+            type = param.attrib['type']
+
         if need_prefixed_names:
             argname = 'out_' if need_return_types else 'arg_'
         else:
@@ -496,11 +545,11 @@ def _mk_copy_statements(params, is_method, *, need_return_types=False,
         if _type_is_string(param):
             statements.append('*' + argname +
                               ' = g_strdup(' + argname + '_.c_str())')
-        elif _type_is_string_array(param):
+        elif not is_forced_type and type == 'as':
             statements.append('if(' + argname + ' != nullptr) *' + argname +
                               ' = MockDBusUtils::mk_cstring_array(' +
                               argname + '_)')
-        elif _type_is_gvariant(param):
+        elif is_forced_type or _type_is_gvariant(param):
             statements.append('if(' + argname + ' != nullptr) *' + argname +
                               ' = g_variant_ref(' + argname + '_)')
         else:
