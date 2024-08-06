@@ -113,6 +113,22 @@
                 <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
             </arg>
         </method>
+
+        <!--
+        Retrieve path to image of highest priority for given key.
+        -->
+        <method name="GetScaledImagePath">
+            <arg name="stream_key" type="ay" direction="in">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="format" type="s" direction="in"/>
+            <arg name="error_code" type="y" direction="out"/>
+            <arg name="image_priority" type="y" direction="out"/>
+            <arg name="image_hash" type="ay" direction="out">
+                <annotation name="org.gtk.GDBus.C.ForceGVariant" value="arg"/>
+            </arg>
+            <arg name="path" type="s" direction="out"/>
+        </method>
     </interface>
 
     <interface name="de.tahifi.ArtCache.Monitor">
